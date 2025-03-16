@@ -75,7 +75,7 @@ const Navbar = () => {
                 to="/signup" 
                 className="bg-[#3868F9] text-white px-5 py-1.5 rounded-full hover:bg-[#897IFF] transition duration-200 hover:shadow-lg text-sm"
               >
-                Start Free Trial
+                Sign Up
               </Link>
             )}
           </div>
@@ -153,7 +153,7 @@ const Navbar = () => {
                     onClick={() => setIsOpen(false)}
                     className="bg-[#3868F9] text-white px-5 py-1.5 rounded-full hover:bg-[#897IFF] transition duration-200 hover:shadow-lg text-sm text-center"
                   >
-                    Start Free Trial
+                    Sign Up
                   </Link>
                 )}
               </div>
