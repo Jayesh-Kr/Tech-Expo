@@ -90,7 +90,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-purple-500/30 mb-8"
+            className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-purple-500/30 m-8"
           >
             <span className="text-sm text-white/90 font-medium">
               <span className="text-purple-400 font-semibold">New:</span> Blockchain-Powered Monitoring Beta Launch
@@ -162,7 +162,7 @@ export default function Hero() {
                 </button>
               </Link>
             </div>
-            <Link to="/network" className="text-white/90 hover:text-purple-300 transition-colors duration-200 flex items-center gap-1 py-2">
+            <Link to="/network" className="text-white/90 hover:text-purple-300 transition-colors duration-200 flex items-center gap-1 py-2 pl-6">
               <span>Explore Our Network</span>
               <ArrowRight size={16} />
             </Link>

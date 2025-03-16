@@ -5,11 +5,6 @@ const PricingCard = ({
   price, 
   features, 
   isPopular 
-}: { 
-  duration: string; 
-  price: number; 
-  features: string[]; 
-  isPopular?: boolean; 
 }) => {
   return (
     <div className={`rounded-2xl p-6 ${isPopular ? 'bg-[#3868F9] text-white' : 'bg-black/30 text-white/90'} backdrop-blur-md border border-white/[0.08]`}>

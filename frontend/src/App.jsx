@@ -1,14 +1,9 @@
 import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
-import Hero from './components/Hero.jsx';
-import Features from './components/Features.jsx';
-import HowItWorks from './components/HowItWorks.jsx';
-import Comparison from './components/Comparison.jsx';
-import Reviews from './components/Reviews.jsx';
-import MoreFeatures from './components/MoreFeatures.jsx';
 import Footer from './components/Footer.jsx';
-import Supercharge from './components/Supercharge.jsx';
+import LandingPage from './pages/LandingPage.jsx';
+import Pricing from './pages/Pricing.jsx';
 
 const App = () => {
   useEffect(() => {
@@ -52,17 +47,9 @@ const App = () => {
       <Navbar />
       <Routes>
         <Route path="/" element={
-          <>
-            <Hero />
-            <Features />
-            <HowItWorks />
-            <Comparison />
-            <Reviews />
-            <MoreFeatures />
-            <Supercharge />
-          </>
+          <LandingPage/>
         } />
-        {/* Add more routes as needed */}
+        <Route path='/pricing' element = {<Pricing/>} />
       </Routes>
       <Footer />
     </div>
