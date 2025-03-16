@@ -5,6 +5,7 @@ import naclUtil from 'tweetnacl-util';
 
 const CALLBACKS = {};
 // let validatorId = null;
+const Validator_Session = new Map();
 
 async function main() {
     const keypair = Keypair.fromSecretKey(
@@ -17,6 +18,7 @@ async function main() {
         if (data.type === 'signup') {
             CALLBACKS[data.data.callbackId]?.(data.data);
             delete CALLBACKS[data.data.callbackId];
+            Validator_Session.set(ws, data.data.validatorId);
         } else if (data.type === 'validate') {
             await validateHandler(ws, data.data, keypair);
         }
@@ -25,7 +27,7 @@ async function main() {
     ws.on('open', async () => {
         const callbackId = randomUUID();
         CALLBACKS[callbackId] = (data) => {
-            validatorId = data.validatorId;
+            Validator_Session.set(ws, data.validatorId);
         };
         const signedMessage = await signMessage(`Signed message for ${callbackId}, ${keypair.publicKey.toBase58()}`, keypair);
 
@@ -45,7 +47,7 @@ async function validateHandler(ws, { url, callbackId2, websiteId }, keypair) {
     console.log(`Validating ${url}`);
     const startTime = Date.now();
     const signature = await signMessage(`Replying to ${callbackId2}`, keypair);
-
+    const validatorId = Validator_Session.get(ws);
     try {
         const response = await fetch(url);
         const endTime = Date.now();
