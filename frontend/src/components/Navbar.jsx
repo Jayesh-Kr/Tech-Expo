@@ -7,6 +7,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [isSignedIn, setIsSignedIn] = useState(false); // Simple state for demo purposes
 
   const scrollToSection = (sectionId) => {
     if (location.pathname !== '/') {
@@ -20,6 +21,11 @@ const Navbar = () => {
         block: 'center',
       });
     }
+  };
+
+  const handleSignOut = () => {
+    setIsSignedIn(false);
+    navigate('/');
   };
 
   return (
@@ -40,24 +46,38 @@ const Navbar = () => {
             <Link to="/pricing" className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm">
               Pricing
             </Link>
-            <Link to="/integrations" className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm">
-              Integrations
-            </Link>
+            {isSignedIn ? (
+              <Link to="/dashboard" className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm">
+                Dashboard
+              </Link>
+            ) : (
+              <Link to="/validator" className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm">
+                Become a Validator
+              </Link>
+            )}
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <Link 
-              to="/login" 
-              className="text-white/90 hover:text-white transition duration-200 text-sm"
-            >
-              Log in
-            </Link>
-            <Link 
-              to="/signup" 
-              className="bg-[#3868F9] text-white px-5 py-1.5 rounded-full hover:bg-[#897IFF] transition duration-200 hover:shadow-lg text-sm"
-            >
-              Start Free Trial
-            </Link>
+            {isSignedIn ? (
+              <div className="flex items-center space-x-3">
+                <span className="text-white/90 text-sm">
+                  User
+                </span>
+                <button 
+                  onClick={handleSignOut}
+                  className="bg-gray-800/80 text-white/90 px-4 py-1.5 rounded-full hover:bg-gray-700/80 transition duration-200 text-sm"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link 
+                to="/signup" 
+                className="bg-[#3868F9] text-white px-5 py-1.5 rounded-full hover:bg-[#897IFF] transition duration-200 hover:shadow-lg text-sm"
+              >
+                Start Free Trial
+              </Link>
+            )}
           </div>
 
           <div className="md:hidden">
@@ -96,28 +116,46 @@ const Navbar = () => {
               >
                 Pricing
               </Link>
-              <Link 
-                to="/integrations" 
-                onClick={() => setIsOpen(false)}
-                className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm"
-              >
-                Integrations
-              </Link>
+              
+              {isSignedIn ? (
+                <Link 
+                  to="/dashboard" 
+                  onClick={() => setIsOpen(false)}
+                  className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <Link 
+                  to="/validator" 
+                  onClick={() => setIsOpen(false)}
+                  className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm"
+                >
+                  Become a Validator
+                </Link>
+              )}
+              
               <div className="pt-2 border-t border-white/10 flex flex-col space-y-2">
-                <Link
-                  to="/login"
-                  onClick={() => setIsOpen(false)}
-                  className="text-white/90 hover:text-white transition duration-200 text-sm"
-                >
-                  Log in
-                </Link>
-                <Link
-                  to="/signup"
-                  onClick={() => setIsOpen(false)}
-                  className="bg-[#3868F9] text-white px-5 py-1.5 rounded-full hover:bg-[#897IFF] transition duration-200 hover:shadow-lg text-sm text-center"
-                >
-                  Start Free Trial
-                </Link>
+                {isSignedIn ? (
+                  <button 
+                    onClick={() => {
+                      setIsSignedIn(false);
+                      setIsOpen(false);
+                      navigate('/');
+                    }}
+                    className="bg-gray-800/80 text-white/90 px-4 py-1.5 rounded-full hover:bg-gray-700/80 transition duration-200 text-sm"
+                  >
+                    Sign Out
+                  </button>
+                ) : (
+                  <Link
+                    to="/signup"
+                    onClick={() => setIsOpen(false)}
+                    className="bg-[#3868F9] text-white px-5 py-1.5 rounded-full hover:bg-[#897IFF] transition duration-200 hover:shadow-lg text-sm text-center"
+                  >
+                    Start Free Trial
+                  </Link>
+                )}
               </div>
             </div>
           </div>
