@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import LandingPage from './pages/LandingPage.jsx';
+import Pricing from './pages/Pricing.jsx';
 
 const App = () => {
   useEffect(() => {
@@ -48,7 +49,7 @@ const App = () => {
         <Route path="/" element={
           <LandingPage/>
         } />
-        {/* Add more routes as needed */}
+        <Route path='/pricing' element = {<Pricing/>} />
       </Routes>
       <Footer />
     </div>
