@@ -1,138 +1,90 @@
-import WebSocket from 'ws';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
+import { WebSocket } from 'ws';
 import nacl from 'tweetnacl';
-import { decodeUTF8 } from 'tweetnacl-util';
-import { Website, Validator, WebsiteTick } from '../model/model.js';
-import mongoose from 'mongoose';
+import naclUtil from 'tweetnacl-util';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/techexpo';
-mongoose.connect(MONGODB_URI);
-
-const availableValidators = [];
 const CALLBACKS = {};
-const COST_PER_VALIDATION = 100; // in lamports
+let validatorId = null;
 
-const wss = new WebSocket.Server({ port: 8081 });
+async function main() {
+    const keypair = Keypair.fromSecretKey(
+        Uint8Array.from(JSON.parse(process.env.PRIVATE_KEY))
+    );
+    const ws = new WebSocket("ws://localhost:8081");
 
-wss.on('connection', async (ws) => {
-    ws.on('message', async (message) => {
-        const data = JSON.parse(message);
-
+    ws.on('message', async (event) => {
+        const data = JSON.parse(event);
         if (data.type === 'signup') {
-            const verified = await verifyMessage(
-                `Signed message for ${data.data.callbackId}, ${data.data.publicKey}`,
-                data.data.publicKey,
-                data.data.signedMessage
-            );
-            if (verified) {
-                await signupHandler(ws, data.data);
-            }
-        } else if (data.type === 'validate') {
-            CALLBACKS[data.data.callbackId](data);
+            CALLBACKS[data.data.callbackId]?.(data.data);
             delete CALLBACKS[data.data.callbackId];
+        } else if (data.type === 'validate') {
+            await validateHandler(ws, data.data, keypair);
         }
     });
 
-    ws.on('close', () => {
-        const index = availableValidators.findIndex(v => v.socket === ws);
-        if (index !== -1) availableValidators.splice(index, 1);
-    });
-});
+    ws.on('open', async () => {
+        const callbackId = randomUUID();
+        CALLBACKS[callbackId] = (data) => {
+            validatorId = data.validatorId;
+        };
+        const signedMessage = await signMessage(`Signed message for ${callbackId}, ${keypair.publicKey.toBase58()}`, keypair);
 
-async function signupHandler(ws, { ip, publicKey, signedMessage, callbackId }) {
-    const validatorDb = await Validator.findOne({ publicKey });
-
-    if (validatorDb) {
         ws.send(JSON.stringify({
             type: 'signup',
             data: {
-                validatorId: validatorDb._id,
                 callbackId,
+                ip: '127.0.0.1',
+                publicKey: keypair.publicKey.toBase58(),
+                signedMessage,
             },
         }));
-
-        availableValidators.push({
-            validatorId: validatorDb._id,
-            socket: ws,
-            publicKey: validatorDb.publicKey,
-        });
-        return;
-    }
-
-    const newValidator = await Validator.create({
-        _id: uuidv4(),
-        ip,
-        publicKey,
-        location: 'unknown',
-        pendingPayouts: 0,
-    });
-
-    ws.send(JSON.stringify({
-        type: 'signup',
-        data: {
-            validatorId: newValidator._id,
-            callbackId,
-        },
-    }));
-
-    availableValidators.push({
-        validatorId: newValidator._id,
-        socket: ws,
-        publicKey,
     });
 }
 
-async function verifyMessage(message, publicKey, signature) {
-    const messageBytes = decodeUTF8(message);
-    return nacl.sign.detached.verify(
-        messageBytes,
-        new Uint8Array(JSON.parse(signature)),
-        new Uint8Array(Buffer.from(publicKey, 'hex')),
-    );
+async function validateHandler(ws, { url, callbackId, websiteId }, keypair) {
+    console.log(`Validating ${url}`);
+    const startTime = Date.now();
+    const signature = await signMessage(`Replying to ${callbackId}`, keypair);
+
+    try {
+        const response = await fetch(url);
+        const endTime = Date.now();
+        const latency = endTime - startTime;
+        const status = response.status;
+
+        ws.send(JSON.stringify({
+            type: 'validate',
+            data: {
+                callbackId,
+                status: status === 200 ? 'Good' : 'Bad',
+                latency,
+                websiteId,
+                validatorId,
+                signedMessage: signature,
+            },
+        }));
+    } catch (error) {
+        ws.send(JSON.stringify({
+            type: 'validate',
+            data: {
+                callbackId,
+                status: 'Bad',
+                latency: 1000,
+                websiteId,
+                validatorId,
+                signedMessage: signature,
+            },
+        }));
+        console.error(error);
+    }
 }
 
-setInterval(async () => {
-    const websitesToMonitor = await Website.find({ disabled: false });
+async function signMessage(message, keypair) {
+    const messageBytes = naclUtil.decodeUTF8(message);
+    const signature = nacl.sign.detached(messageBytes, keypair.secretKey);
+    return JSON.stringify(Array.from(signature));
+}
 
-    for (const website of websitesToMonitor) {
-        availableValidators.forEach(validator => {
-            const callbackId = uuidv4();
-            console.log(`Sending validate to ${validator.validatorId} ${website.url}`);
-            validator.socket.send(JSON.stringify({
-                type: 'validate',
-                data: {
-                    url: website.url,
-                    callbackId
-                },
-            }));
+main();
 
-            CALLBACKS[callbackId] = async (data) => {
-                if (data.type === 'validate') {
-                    const { validatorId, status, latency, signedMessage } = data.data;
-                    const verified = await verifyMessage(
-                        `Replying to ${callbackId}`,
-                        validator.publicKey,
-                        signedMessage
-                    );
-                    if (!verified) {
-                        return;
-                    }
-
-                    await WebsiteTick.create({
-                        _id: uuidv4(),
-                        websiteId: website._id,
-                        validatorId,
-                        status,
-                        latency,
-                        createdAt: new Date(),
-                    });
-
-                    await Validator.findByIdAndUpdate(
-                        validatorId,
-                        { $inc: { pendingPayouts: COST_PER_VALIDATION } }
-                    );
-                }
-            };
-        });
-    }
-}, 60 * 1000);
+setInterval(async () => {}, 10000);
