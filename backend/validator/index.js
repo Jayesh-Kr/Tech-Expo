@@ -4,7 +4,7 @@ import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
 
 const CALLBACKS = {};
-let validatorId = null;
+// let validatorId = null;
 
 async function main() {
     const keypair = Keypair.fromSecretKey(
@@ -41,10 +41,10 @@ async function main() {
     });
 }
 
-async function validateHandler(ws, { url, callbackId, websiteId }, keypair) {
+async function validateHandler(ws, { url, callbackId2, websiteId }, keypair) {
     console.log(`Validating ${url}`);
     const startTime = Date.now();
-    const signature = await signMessage(`Replying to ${callbackId}`, keypair);
+    const signature = await signMessage(`Replying to ${callbackId2}`, keypair);
 
     try {
         const response = await fetch(url);
@@ -55,7 +55,7 @@ async function validateHandler(ws, { url, callbackId, websiteId }, keypair) {
         ws.send(JSON.stringify({
             type: 'validate',
             data: {
-                callbackId,
+                callbackId2,
                 status: status === 200 ? 'Good' : 'Bad',
                 latency,
                 websiteId,
@@ -67,7 +67,7 @@ async function validateHandler(ws, { url, callbackId, websiteId }, keypair) {
         ws.send(JSON.stringify({
             type: 'validate',
             data: {
-                callbackId,
+                callbackId2,
                 status: 'Bad',
                 latency: 1000,
                 websiteId,

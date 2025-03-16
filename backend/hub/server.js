@@ -94,21 +94,21 @@ setInterval(async () => {
 
     for (const website of websitesToMonitor) {
         availableValidators.forEach(validator => {
-            const callbackId = randomUUID();
+            const callbackId2 = randomUUID();
             console.log(`Sending validate to ${validator.validatorId} ${website.url}`);
             validator.socket.send(JSON.stringify({
                 type: 'validate',
                 data: {
                     url: website.url,
-                    callbackId
+                    callbackId2
                 },
             }));
 
-            CALLBACKS[callbackId] = async (data) => {
+            CALLBACKS[callbackId2] = async (data) => {
                 if (data.type === 'validate') {
                     const { validatorId, status, latency, signedMessage } = data.data;
                     const verified = await verifyMessage(
-                        `Replying to ${callbackId}`,
+                        `Replying to ${callbackId2}`,
                         validator.publicKey,
                         signedMessage
                     );
