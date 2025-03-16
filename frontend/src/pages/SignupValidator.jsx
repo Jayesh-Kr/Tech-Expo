@@ -160,11 +160,20 @@ const SignupValidator = () => {
                 
                 <div className="pt-2">
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ backgroundColor: "#9333ea" }}
                     whileTap={{ scale: 0.98 }}
                     disabled={isSubmitting}
-                    className={`w-full ${isSubmitting ? 'bg-[#3868F9]/70' : 'bg-[#3868F9] hover:bg-[#897IFF]'} text-white font-medium py-3 rounded-lg transition duration-300 flex items-center justify-center`}
+                    className={`
+                      w-full 
+                      ${isSubmitting ? 'bg-purple-600/70' : 'bg-purple-600'} 
+                      text-white font-medium py-4 rounded-lg 
+                      transition-colors duration-300 
+                      flex items-center justify-center 
+                      relative overflow-hidden
+                      group border border-purple-500/40
+                    `}
                   >
+                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></span>
                     {isSubmitting ? (
                       <>
                         <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -173,7 +182,14 @@ const SignupValidator = () => {
                         </svg>
                         Submitting...
                       </>
-                    ) : 'Sign Up'}
+                    ) : (
+                      <span className="flex items-center">
+                        Become a Validator
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </span>
+                    )}
                   </motion.button>
                 </div>
                 
