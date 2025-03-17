@@ -105,11 +105,8 @@ const Pricing = () => {
           className="text-center relative z-10 mb-16"
         >
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            <span className="inline-flex flex-col sm:flex-row items-center justify-center sm:space-x-3">
-              Simple, Transparent
-              <span className="relative bg-[linear-gradient(to_left,#6b6b6b,#848484_20%,#ffffff_50%,#848484_80%,#6b6b6b_100%)] bg-clip-text text-transparent animate-shine-fast">
-                Pricing
-              </span>
+            <span className="relative bg-[linear-gradient(to_left,#6b6b6b,#848484_20%,#ffffff_50%,#848484_80%,#6b6b6b_100%)] bg-clip-text text-transparent animate-shine-fast">
+              Plans and Pricing
             </span>
           </h1>
           <p className="text-gray-300 text-lg max-w-3xl mx-auto">
