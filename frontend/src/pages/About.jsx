@@ -101,36 +101,23 @@ const About = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                name: "Alex Chen",
-                role: "Founder & CEO",
-                bio: "Former cybersecurity expert with 10+ years experience in distributed systems and blockchain technology.",
-                image: "https://randomuser.me/api/portraits/men/32.jpg"
+                name: "Rohan Kumar Mohanta"
               },
               {
-                name: "Sarah Johnson",
-                role: "CTO",
-                bio: "Blockchain developer and system architect with experience building high-availability monitoring solutions.",
-                image: "https://randomuser.me/api/portraits/women/44.jpg"
+                name: "Jayesh Krishna"
               },
               {
-                name: "David Park",
-                role: "Head of Product",
-                bio: "Product leader focused on creating intuitive interfaces for complex technical products.",
-                image: "https://randomuser.me/api/portraits/men/22.jpg"
+                name: "Shivagi Sharma"
               }
             ].map((member, index) => (
               <div 
                 key={index}
                 className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:bg-black/40 transition-all duration-300 text-center"
               >
-                <img 
-                  src={member.image} 
-                  alt={member.name}
-                  className="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-purple-400"
-                />
-                <h3 className="text-xl font-semibold text-white mb-1">{member.name}</h3>
-                <p className="text-purple-400 mb-3">{member.role}</p>
-                <p className="text-gray-300">{member.bio}</p>
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xl font-bold mx-auto mb-4">
+                  {member.name.charAt(0)}
+                </div>
+                <h3 className="text-xl font-semibold text-white">{member.name}</h3>
               </div>
             ))}
           </div>
