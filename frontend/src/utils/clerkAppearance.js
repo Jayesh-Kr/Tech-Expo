@@ -28,7 +28,8 @@ const clerkAppearance = {
       border: 'none',
       padding: 0,
       width: '100%',
-      maxWidth: '100%'
+      maxWidth: '100%',
+      overflow: 'visible'
     },
     headerTitle: {
       display: 'none', // Hide default title as we're using our own
@@ -69,7 +70,7 @@ const clerkAppearance = {
       borderRadius: '0.375rem',
       color: 'white',
       backgroundColor: '#111827',
-      padding: '0.5rem 0.75rem',
+      padding: '0.75rem',
       '&:hover': {
         borderColor: '#4b5563',
       },
@@ -79,13 +80,15 @@ const clerkAppearance = {
         outline: '1px solid rgba(99, 102, 241, 0.2)',
         outlineOffset: '0px'
       },
-      height: '38px',
+      height: 'auto',
+      minHeight: '42px',
       width: '100%',
       maxWidth: '100%',
       boxSizing: 'border-box',
       fontSize: '0.875rem',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis'
+      overflow: 'visible',
+      textOverflow: 'ellipsis',
+      display: 'block'
     },
     formFieldAction: {
       color: '#6366f1',
@@ -94,7 +97,9 @@ const clerkAppearance = {
         color: '#4f46e5'
       },
       fontWeight: 500,
-      marginTop: '0.25rem'
+      marginTop: '0.25rem',
+      visibility: 'visible',
+      display: 'block'
     },
     footerActionText: {
       color: '#9ca3af',
@@ -234,21 +239,27 @@ const clerkAppearance = {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
+      overflow: 'visible',
       '& > *': {
         boxSizing: 'border-box',
-        maxWidth: '100%'
+        maxWidth: '100%',
+        width: '100%'
       }
     },
     form: {
       width: '100%',
       maxWidth: '100%',
       boxSizing: 'border-box',
-      padding: '0'
+      padding: '0',
+      overflow: 'visible'
     },
     formFieldInputGroup: {
       width: '100%',
       maxWidth: '100%',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      display: 'block',  
+      overflow: 'visible',
+      marginBottom: '1rem'
     },
     formFieldRow: {
       width: '100%',
@@ -304,6 +315,20 @@ const clerkAppearance = {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center'
+    },
+    // Make sure password field is visible
+    formButtonReset: {
+      visibility: 'visible',
+      display: 'block',
+      width: '100%'
+    },
+    formFieldInputShowPasswordButton: {
+      visibility: 'visible',
+      display: 'block',
+      color: '#6366f1',
+      '&:hover': {
+        color: '#4f46e5'
+      }
     }
   },
   layout: {

@@ -32,6 +32,22 @@ const Navbar = () => {
     }
   };
 
+  const handleFeaturesClick = (e) => {
+    e.preventDefault();
+    setIsOpen(false);
+    
+    // If already on homepage, just scroll to features section
+    if (location.pathname === '/') {
+      const featuresSection = document.getElementById('features');
+      if (featuresSection) {
+        featuresSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // Navigate to homepage with a flag to scroll to features
+      navigate('/?scrollTo=features');
+    }
+  };
+
   return (
     <nav className="bg-black/30 backdrop-blur-md py-4 rounded-full shadow-lg fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition duration-300 w-[90%] max-w-6xl border border-white/[0.08]">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,7 +57,7 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
-            <button onClick={() => scrollToSection('features')} className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm">
+            <button onClick={handleFeaturesClick} className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm">
               Features
             </button>
             <Link to="/pricing" className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm">
@@ -97,8 +113,8 @@ const Navbar = () => {
           <div className="md:hidden mt-4 bg-black/80 backdrop-blur-xl rounded-xl border border-white/[0.08] p-4 absolute top-full left-0 right-0 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <div className="flex flex-col space-y-4">
               <button 
-                onClick={() => {
-                  scrollToSection('features');
+                onClick={(e) => {
+                  handleFeaturesClick(e);
                   setIsOpen(false);
                 }} 
                 className="text-white/90 hover:text-[#E36FFF] transition duration-200 text-sm text-left"

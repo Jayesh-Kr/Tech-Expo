@@ -245,8 +245,8 @@ const StatCard = ({ title, value, subtitle, icon: Icon, startFrom }) => {
 
 const Features = () => {
   return (
-    <div id="features" className="py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div id="features" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -254,8 +254,12 @@ const Features = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Enterprise Monitoring Made Simple
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+            <span className="inline-flex flex-col sm:flex-row items-center justify-center">
+              <span className="relative bg-[linear-gradient(to_left,#6b6b6b,#848484_20%,#ffffff_50%,#848484_80%,#6b6b6b_100%)] bg-clip-text text-transparent animate-shine-fast">
+                Enterprise Monitoring Made Simple
+              </span>
+            </span>
           </h2>
           <p className="text-gray-300 max-w-2xl mx-auto">
             dPIN provides all the tools you need to monitor, analyze, and improve your website's performance.
@@ -270,7 +274,7 @@ const Features = () => {
         >
           <div className="flex flex-col md:flex-row gap-4">
             {/* Performance Analysis Card */}
-            <div className="w-full md:w-[30%] bg-black/30 backdrop-blur-md rounded-2xl p-3 border border-white/[0.08]">
+            <div className="w-full md:w-[30%] bg-black/30 backdrop-blur-md rounded-2xl p-4 border border-white/[0.08]">
               <div>
                 <h2 className="text-lg font-semibold text-white">Service Status</h2>
                 <p className="text-white/70 text-sm mt-1">
@@ -287,7 +291,7 @@ const Features = () => {
             </div>
 
             {/* Trend Chart Card */}
-            <div className="w-full md:w-[70%] bg-black/30 backdrop-blur-md rounded-2xl p-3 border border-white/[0.08]">
+            <div className="w-full md:w-[70%] bg-black/30 backdrop-blur-md rounded-2xl p-4 border border-white/[0.08]">
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <h2 className="text-lg font-semibold text-white">Response Time</h2>
@@ -340,7 +344,7 @@ const Features = () => {
             />
             <StatCard
               title="Alert Response Time"
-              value="< 30s"
+              value="< 15s"
               subtitle="Average time from issue to alert"
               icon={Zap}
             />
