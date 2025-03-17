@@ -11,12 +11,17 @@
     "add-clerk": "npm install @clerk/clerk-react"
   },
   "dependencies": {
-    "framer-motion": "^10.16.4",
+    "@clerk/clerk-react": "^5.24.2",
+    "@solana/web3.js": "^1.98.0",
+    "framer-motion": "^10.18.0",
     "lucide-react": "^0.274.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.14.0",
-    "recharts": "^2.8.0"
+    "react-router-dom": "^6.30.0",
+    "recharts": "^2.8.0",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
+    "vite-plugin-node-polyfills": "^0.23.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.37",

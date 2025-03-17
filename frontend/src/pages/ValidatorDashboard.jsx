@@ -8,8 +8,12 @@ const ValidatorDashboard = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [userName, setUserName] = useState('Validator');
   const [email, setEmail] = useState('validator@example.com');
+  const [publicKey, setPublicKey] = useState('0x1234567890abcdef'); // Mock public key
+  const [ipAddress, setIpAddress] = useState('192.168.1.1'); // Mock IP address
+  const [location, setLocation] = useState('Delhi, USA'); // Mock location
+  const [averagePayout, setAveragePayout] = useState('0.01 ETH'); // Mock average payout
   const navigate = useNavigate();
-  
+
   // Simulate loading and auth check
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -22,8 +26,8 @@ const ValidatorDashboard = () => {
   // Mock data for the dashboard
   const mockStats = {
     validations: 1248,
-    uptime: '99.8%',
-    rewards: '0.025 ETH',
+    uptime: '2 hours',
+    rewards: '0.025 SOL',
     status: 'Active'
   };
 
@@ -37,6 +41,11 @@ const ValidatorDashboard = () => {
   const handleSignOut = () => {
     setIsSignedIn(false);
     navigate('/signin-validator');
+  };
+
+  const handleWithdraw = () => {
+    alert('Withdraw function triggered');
+    // Implement the logic to withdraw the amount
   };
 
   if (!isLoaded) {
@@ -240,6 +249,9 @@ const ValidatorDashboard = () => {
                     <div>
                       <div className="font-medium text-white">{userName}</div>
                       <div className="text-sm text-gray-400">{email}</div>
+                      <div className="text-sm text-gray-400">Public Key: {publicKey}</div>
+                      <div className="text-sm text-gray-400">IP Address: {ipAddress}</div>
+                      <div className="text-sm text-gray-400">Location: {location}</div>
                     </div>
                   </div>
                   
@@ -250,6 +262,23 @@ const ValidatorDashboard = () => {
                     <LogOut className="h-4 w-4 mr-2" />
                     Sign Out
                   </button>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-4 border-t border-white/10">
+                <div className="bg-white/5 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <div className="font-medium text-white">Average Payout</div>
+                      <div className="text-sm text-gray-400">{averagePayout}</div>
+                    </div>
+                    <button 
+                      onClick={handleWithdraw}
+                      className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors"
+                    >
+                      Withdraw
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

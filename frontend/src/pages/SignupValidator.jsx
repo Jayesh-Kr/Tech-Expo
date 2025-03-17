@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Network, ChevronLeft, Check } from 'lucide-react';
+import { Network, ChevronLeft, Check, Copy } from 'lucide-react';
+import naclUtil from 'tweetnacl-util';
+import { Connection, PublicKey, Keypair } from '@solana/web3.js';
 
 const SignupValidator = () => {
   const navigate = useNavigate();
@@ -9,11 +11,14 @@ const SignupValidator = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    name: ''
+    name: '',
+    publicKey: ''
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [keyPair, setKeyPair] = useState(null);
+  const [hasSufficientBalance, setHasSufficientBalance] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,13 +28,38 @@ const SignupValidator = () => {
     }));
   };
 
+  const handleGenerateKeyPair = () => {
+    const keyPair = Keypair.generate();
+    const publicKey = keyPair.publicKey.toString();
+    const privateKey = naclUtil.encodeBase64(keyPair.secretKey);
+    setKeyPair({ publicKey, privateKey });
+  };
+
+  const checkBalance = async (publicKey) => {
+    const alchemyUrl = import.meta.env.VITE_ALCHEMY_URL;
+    try {
+      const connection = new Connection(alchemyUrl);
+      const balance = await connection.getBalance(new PublicKey(publicKey));
+      console.log('Balance:', balance);
+      const solBalance = balance / 1e9; // Convert lamports to SOL
+      setHasSufficientBalance(solBalance >= 0.05);
+    } catch (err) {
+      console.error('Balance check error:', err);
+    }
+  };
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    alert('Copied to clipboard');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
     // Basic validation
-    if (!formData.email || !formData.password || !formData.name) {
+    if (!formData.email || !formData.password || !formData.name || !formData.publicKey) {
       setError('All fields are required');
       setIsSubmitting(false);
       return;
@@ -44,7 +74,7 @@ const SignupValidator = () => {
     try {
       // Simulate signup process
       setTimeout(() => {
-        console.log('Signup with:', formData.email, formData.name);
+        console.log('Signup with:', formData.email, formData.name, formData.publicKey);
         setSuccess(true);
         
         // Redirect to dashboard after signup
@@ -157,21 +187,72 @@ const SignupValidator = () => {
                     placeholder="••••••••"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2 text-sm">Public Key (for payout)</label>
+                  <input 
+                    type="text"
+                    name="publicKey"
+                    value={formData.publicKey}
+                    onChange={handleChange}
+                    onBlur={() => checkBalance(formData.publicKey)}
+                    className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white" 
+                    placeholder="Enter your public key"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2 text-sm">Generate Your Key Pair</label>
+                  <div className="flex space-x-4">
+                    <div className="relative w-1/2">
+                      <input 
+                        type="text"
+                        value={keyPair ? keyPair.publicKey : ''}
+                        readOnly
+                        className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white" 
+                        placeholder="Public Key"
+                      />
+                      <div 
+                        onClick={() => handleCopy(keyPair ? keyPair.publicKey : '')}
+                        className="absolute right-2 top-2 flex items-center text-purple-600 cursor-pointer"
+                      >
+                        <Copy className="mr-1" />
+                        <span>Copy</span>
+                      </div>
+                    </div>
+                    <div className="relative w-1/2">
+                      <input 
+                        type="text"
+                        value={keyPair ? keyPair.privateKey : ''}
+                        readOnly
+                        className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white" 
+                        placeholder="Private Key"
+                      />
+                      <div 
+                        onClick={() => handleCopy(keyPair ? keyPair.privateKey : '')}
+                        className="absolute right-2 top-2 flex items-center text-purple-600 cursor-pointer"
+                      >
+                        <Copy className="mr-1" />
+                        <span>Copy</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-red-500 text-xs mt-2">Never share your private key with anyone.</p>
+                  <button 
+                    type="button"
+                    onClick={handleGenerateKeyPair}
+                    className="mt-2 bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors duration-300"
+                  >
+                    Generate Key Pair
+                  </button>
+                </div>
                 
                 <div className="pt-2">
                   <motion.button
                     whileHover={{ backgroundColor: "#9333ea" }}
                     whileTap={{ scale: 0.98 }}
-                    disabled={isSubmitting}
-                    className={`
-                      w-full 
-                      ${isSubmitting ? 'bg-purple-600/70' : 'bg-purple-600'} 
-                      text-white font-medium py-4 rounded-lg 
-                      transition-colors duration-300 
-                      flex items-center justify-center 
-                      relative overflow-hidden
-                      group border border-purple-500/40
-                    `}
+                    disabled={isSubmitting || !hasSufficientBalance}
+                    className={`w-full ${isSubmitting ? 'bg-purple-600/70' : 'bg-purple-600'} text-white font-medium py-4 rounded-lg transition-colors duration-300 flex items-center justify-center relative overflow-hidden group border border-purple-500/40`}
                   >
                     <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></span>
                     {isSubmitting ? (
