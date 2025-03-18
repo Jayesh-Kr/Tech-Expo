@@ -334,6 +334,7 @@ const Dashboard = () => {
   const [activeMonitorIds, setActiveMonitorIds] = useState(() => 
     generateMockMonitors().map(monitor => monitor.id)
   );
+  const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, monitorId: null, monitorName: "" });
   
   // Handle adding a new monitor
   const handleAddMonitor = (newMonitor) => {
@@ -342,12 +343,35 @@ const Dashboard = () => {
     setActiveMonitorIds([...activeMonitorIds, newMonitor.id]);
   };
   
+  // Open delete confirmation dialog
+  const openDeleteDialog = (monitorId) => {
+    const monitor = monitors.find(m => m.id === monitorId);
+    if (monitor) {
+      setDeleteDialog({ 
+        isOpen: true, 
+        monitorId: monitorId,
+        monitorName: monitor.name
+      });
+    }
+  };
+  
   // Handle deleting a monitor
   const handleDeleteMonitor = (monitorId) => {
-    if (confirm("Are you sure you want to delete this monitor?")) {
-      setMonitors(monitors.filter(monitor => monitor.id !== monitorId));
-      setActiveMonitorIds(activeMonitorIds.filter(id => id !== monitorId));
+    openDeleteDialog(monitorId);
+  };
+  
+  // Confirm deletion in custom dialog
+  const confirmDeleteMonitor = () => {
+    if (deleteDialog.monitorId) {
+      setMonitors(monitors.filter(monitor => monitor.id !== deleteDialog.monitorId));
+      setActiveMonitorIds(activeMonitorIds.filter(id => id !== deleteDialog.monitorId));
+      setDeleteDialog({ isOpen: false, monitorId: null, monitorName: "" });
     }
+  };
+  
+  // Cancel deletion
+  const cancelDeleteMonitor = () => {
+    setDeleteDialog({ isOpen: false, monitorId: null, monitorName: "" });
   };
   
   // Toggle monitors on/off globally
@@ -398,6 +422,35 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen pt-16 pb-12 animate-fade-in bg-gradient-to-b from-gray-900 via-gray-900 to-black">
+      {/* Delete confirmation dialog */}
+      {deleteDialog.isOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-gray-800 rounded-xl max-w-md w-full border border-gray-700 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-2 text-white">Delete Monitor</h2>
+              <p className="mb-6 text-gray-300">
+                Are you sure you want to delete this monitor? <span className="font-medium text-white">"{deleteDialog.monitorName}"</span> will be permanently removed.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <Button 
+                  onClick={cancelDeleteMonitor}
+                  variant="ghost"
+                  className="text-sm"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={confirmDeleteMonitor}
+                  variant="default"
+                  className="text-sm bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 shadow-md hover:shadow-lg shadow-red-500/20"
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="container px-4 py-8 max-w-7xl mx-auto">
         {/* Header with welcome and quick stats */}
         <div className="flex flex-col gap-8 mb-12">
