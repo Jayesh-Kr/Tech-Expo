@@ -10,7 +10,7 @@ const ValidatorDashboard = () => {
   const [email, setEmail] = useState('validator@example.com');
   const [publicKey, setPublicKey] = useState('0x1234567890abcdef'); // Mock public key
   const [ipAddress, setIpAddress] = useState('192.168.1.1'); // Mock IP address
-  const [location, setLocation] = useState('Delhi, USA'); // Mock location
+  const [location, setLocation] = useState('Delhi, India'); // Mock location
   const [averagePayout, setAveragePayout] = useState('0.01 ETH'); // Mock average payout
   const navigate = useNavigate();
 
@@ -195,6 +195,11 @@ const ValidatorDashboard = () => {
                   View All Activity
                 </button>
               </div>
+            </div>
+            <div className="mt-4 text-center">
+              <button className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors">
+                Start Validating
+              </button>
             </div>
           </motion.div>
 

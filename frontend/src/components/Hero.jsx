@@ -145,12 +145,12 @@ export default function Hero() {
             <FeatureBadge icon={Activity} text="Real-Time Alerts" />
           </motion.div>
           
-          {/* CTA buttons */}
+          {/* CTA button */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 1.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+            className="flex items-center justify-center mb-16"
           >
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur opacity-75 group-hover:opacity-100 transition-all duration-300"></div>
@@ -162,10 +162,6 @@ export default function Hero() {
                 </button>
               </Link>
             </div>
-            <Link to="/network" className="text-white/90 hover:text-purple-300 transition-colors duration-200 flex items-center gap-1 py-2 pl-6">
-              <span>Explore Our Network</span>
-              <ArrowRight size={16} />
-            </Link>
           </motion.div>
           
           {/* Stats counters */}

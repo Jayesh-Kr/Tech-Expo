@@ -107,7 +107,7 @@ const About = () => {
                 name: "Jayesh Krishna"
               },
               {
-                name: "Shivagi Sharma"
+                name: "Shivangi Sharma"
               }
             ].map((member, index) => (
               <div 

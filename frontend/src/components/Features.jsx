@@ -1,27 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { LineChart, Line, ResponsiveContainer, XAxis, CartesianGrid } from 'recharts';
-import { ArrowUpRight, BarChart3, PieChart, TrendingUp, BellRing, Zap, Clock } from 'lucide-react';
+import { LineChart, Line, ResponsiveContainer, XAxis, CartesianGrid, YAxis } from 'recharts';
+import { ArrowUpRight, BarChart3, PieChart, TrendingUp, BellRing, Zap, Clock, Smile } from 'lucide-react';
 
 const chartData = [
-  { name: 'Jan', value: 100 },
-  { name: 'Feb', value: 80 },
-  { name: 'Mar', value: 250 },
-  { name: 'Apr', value: 200 },
-  { name: 'May', value: 180 },
-  { name: 'Jun', value: 300 },
-  { name: 'Jul', value: 250 },
-  { name: 'Aug', value: 280 },
-  { name: 'Sep', value: 200 },
-  { name: 'Oct', value: 150 },
-  { name: 'Nov', value: 180 },
-  { name: 'Dec', value: 240 },
+  { time: '1 min', latency: 100 },
+  { time: '2 min', latency: 80 },
+  { time: '3 min', latency: 250 },
+  { time: '4 min', latency: 200 },
+  { time: '5 min', latency: 180 },
+  { time: '6 min', latency: 300 },
+  { time: '7 min', latency: 250 },
+  { time: '8 min', latency: 280 },
+  { time: '9 min', latency: 200 },
+  { time: '10 min', latency: 150 },
 ];
 
 const pipelineData = [
-  { id: '01', name: 'Uptime SLA', progress: 99.9, color: '#FFB547' },
-  { id: '02', name: 'API Performance', progress: 97, color: '#3DD2B4' },
-  { id: '03', name: 'Monitoring Accuracy', progress: 99.5, color: '#F06292' },
+  { id: '01', name: 'Database Performance', progress: 98.8, color: '#FFB547' },
+  { id: '02', name: 'Successful Transactions', progress: 95, color: '#3DD2B4' },
+  { id: '03', name: 'Monitoring Accuracy', progress: 96.5, color: '#F06292' },
 ];
 
 const ProgressBar = ({ progress, color }) => {
@@ -110,7 +108,7 @@ const CircleProgress = ({ progress }) => {
 
 const GradientChart = () => (
   <ResponsiveContainer width="100%" height={150}>
-    <LineChart data={chartData}>
+    <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
       <defs>
         <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
           <stop offset="5%" stopColor="#3868F9" stopOpacity={0.3} />
@@ -123,23 +121,23 @@ const GradientChart = () => (
         horizontal={true}
         vertical={true}
       />
-      <CartesianGrid 
-        strokeDasharray="0"
-        stroke="rgba(255,255,255,0.05)"
-        horizontal={true}
-        vertical={true}
-        horizontalPoints={Array.from({ length: 60 }, (_, i) => i * 2.5)}
-        verticalPoints={Array.from({ length: 240 }, (_, i) => i * 1.25)}
-      />
       <XAxis
-        dataKey="name"
+        dataKey="time"
         axisLine={false}
         tickLine={false}
         tick={{ fill: '#9CA3AF', fontSize: 12 }}
+        interval={0}
+        padding={{ left: 1, right: 0 }}
+      />
+      <YAxis
+        axisLine={false}
+        tickLine={false}
+        tick={{ fill: '#9CA3AF', fontSize: 12 }}
+        label={{ value: 'Latency (ms)', angle: -90, position: 'insideLeft', fill: '#9CA3AF', dy: 50 }}
       />
       <Line
         type="monotone"
-        dataKey="value"
+        dataKey="latency"
         stroke="#3868F9"
         strokeWidth={2}
         dot={false}
@@ -208,7 +206,7 @@ const AnimatedNumber = ({ value, suffix = '', decimals = 0, startFrom }) => {
   );
 };
 
-const StatCard = ({ title, value, subtitle, icon: Icon, startFrom }) => {
+const StatCard = ({ title, value, subtitle, icon: Icon, startFrom, percentage }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -228,14 +226,14 @@ const StatCard = ({ title, value, subtitle, icon: Icon, startFrom }) => {
         <span className="text-2xl font-bold text-white">
           <AnimatedNumber 
             value={parseFloat(value)} 
-            suffix={value.includes('/') ? `/${value.split('/')[1]}` : value.includes('%') ? '%' : ''}
+            suffix={value.includes('/') ? `/${value.split('/')[1]}` : value.includes('%') ? '%' : ''} 
             decimals={value.includes('/') || value.includes('%') ? 0 : 1}
             startFrom={startFrom}
           />
         </span>
         <span className="text-green-400 flex items-center text-sm mb-1">
           <ArrowUpRight className="w-4 h-4" />
-          12%
+          {percentage}%
         </span>
       </div>
       <p className="text-white/60 text-sm">{subtitle}</p>
@@ -332,21 +330,24 @@ const Features = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <StatCard
               title="Average Response Time"
-              value="287ms"
+              value="288ms"
               subtitle="Across all monitored endpoints"
               icon={Clock}
+              percentage={12}
             />
             <StatCard
               title="Alerts Sent"
-              value="1,248"
+              value="2,345"
               subtitle="This month via email, SMS & Slack"
               icon={BellRing}
+              percentage={18}
             />
             <StatCard
-              title="Alert Response Time"
-              value="< 15s"
-              subtitle="Average time from issue to alert"
-              icon={Zap}
+              title="User Satisfaction"
+              value="91%"
+              subtitle="Positive feedback from users"
+              icon={Smile}
+              percentage={63}
             />
           </div>
         </motion.div>
