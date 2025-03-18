@@ -4,6 +4,7 @@ import { Website, Validator, WebsiteTick, User } from "./model/model.js";
 import { authenticateUser } from './middleware.js';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
+import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
@@ -60,13 +61,18 @@ app.get("/website/:id", authenticateUser, async (req, res) => {
 });
 
 // Validator Creation
-app.post("/validator", authenticateUser, async (req, res) => {
+app.post("/validator", async (req, res) => {
     try {
+        const {name,email,payoutPublicKey, publicKey,location,ip,password} = req.body;
+        let hashedPassword = await bcrypt.hash(password,10);
         const validator = await Validator.create({
-            _id: uuidv4(),
-            publicKey: req.body.publicKey,
-            location: req.body.location,
-            ip: req.body.ip
+            name : name,
+            email : email,
+            publicKey: publicKey,
+            location: location,
+            ip: ip,
+            payoutPublicKey : payoutPublicKey,
+            password : hashedPassword
         });
         res.status(201).json(validator);
     } catch (error) {

@@ -15,11 +15,14 @@ const websiteSchema = new mongoose.Schema({
 });
 
 const validatorSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
+  name : {type : String, required : true},
+  email : {type : String, required: true},
   publicKey: { type: String, required: true },
   location: { type: String, required: true },
   ip: { type: String, required: true },
   pendingPayouts: { type: Number, default: 0 },
+  payoutPublicKey : {type : String, required : true},
+  password : {type : String, required : true}
 });
 
 const websiteTickSchema = new mongoose.Schema({
