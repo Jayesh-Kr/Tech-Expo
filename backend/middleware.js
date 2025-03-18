@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
+import { configDotenv } from 'dotenv';
 import { User } from './model/model.js';
-
+configDotenv();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export const authenticateUser = async (req, res, next) => {
