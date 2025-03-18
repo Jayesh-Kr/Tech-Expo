@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { CheckCircle, XCircle, ArrowRight, AlertCircle } from 'lucide-react';
+import PageContainer from '../components/PageContainer';
 
 const Pricing = () => {
   const [annual, setAnnual] = useState(true);
+  
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   
   // Pricing plans
   const plans = [
@@ -91,7 +97,7 @@ const Pricing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black pt-24 px-4 sm:px-6 lg:px-8 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black pt-32 px-4 sm:px-6 lg:px-8 pb-20">
       <div className="max-w-7xl mx-auto">
         {/* Background glow effects */}
         <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] z-0"></div>

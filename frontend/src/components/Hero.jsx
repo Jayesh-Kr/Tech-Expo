@@ -154,7 +154,7 @@ export default function Hero() {
           >
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur opacity-75 group-hover:opacity-100 transition-all duration-300"></div>
-              <Link to="/signup">
+              <Link to="/sign-up">
                 <button className="relative bg-black px-8 py-4 rounded-full font-semibold text-white hover:text-white/90 transition-all duration-300">
                   <span className="flex items-center gap-2">
                     Start Monitoring <ArrowRight size={18} />
