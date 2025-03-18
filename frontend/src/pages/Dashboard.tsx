@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Search, Filter, BarChart, AlertCircle, Bell, Settings, ArrowRight, Clock, User, Cpu, X, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, BarChart, AlertCircle, Bell, Settings, ArrowRight, Clock, User, Cpu, X, Trash2, Power } from "lucide-react";
 
 // Create a simple button component instead of importing one that can't be found
 const Button = ({ children, onClick, className = "", variant = "default" }) => (
@@ -15,7 +15,7 @@ const Button = ({ children, onClick, className = "", variant = "default" }) => (
 );
 
 // Create the MonitorCard component with improved design
-const MonitorCard = ({ monitor, onDelete }) => {
+const MonitorCard = ({ monitor, onDelete, isActive, onToggle }) => {
   const handleDeleteClick = (e) => {
     // Stop the click event from propagating to the card link
     e.stopPropagation();
@@ -23,21 +23,19 @@ const MonitorCard = ({ monitor, onDelete }) => {
     onDelete(monitor.id);
   };
 
+  const handleToggleClick = (e) => {
+    // Stop the click event from propagating to the card link
+    e.stopPropagation();
+    e.preventDefault();
+    onToggle(monitor.id);
+  };
+
   return (
-    <div className="rounded-xl border border-gray-700 bg-gray-800/80 text-white shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-gray-600 relative group">
-      {/* Delete button - appears on hover */}
-      <button 
-        onClick={handleDeleteClick}
-        className="absolute top-3 right-3 p-1.5 bg-gray-700/50 rounded-full text-gray-400 hover:text-rose-400 hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-        title="Delete monitor"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
-      
+    <div className={`rounded-xl border ${isActive ? "border-gray-700 bg-gray-800/80" : "border-gray-700/50 bg-gray-800/40"} text-white shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-gray-600 relative group`}>
       {/* Make the entire card clickable */}
       <a 
         href={`/monitor/${monitor.id}`}
-        className="block"
+        className={`block ${!isActive && "opacity-70"}`}
       >
         <div className="p-5">
           <div className="flex justify-between items-start mb-3">
@@ -45,12 +43,13 @@ const MonitorCard = ({ monitor, onDelete }) => {
               <span className="relative flex h-3 w-3 mr-3">
                 <span 
                   className={`absolute inline-flex h-full w-full rounded-full ${
+                    !isActive ? "bg-gray-500" :
                     monitor.status === "up" ? "bg-emerald-500" : 
                     monitor.status === "warning" ? "bg-amber-500" : 
                     "bg-rose-500"
                   }`}
                 />
-                {monitor.status !== "up" && (
+                {isActive && monitor.status !== "up" && (
                   <span 
                     className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
                       monitor.status === "warning" ? "bg-amber-500" : 
@@ -62,14 +61,41 @@ const MonitorCard = ({ monitor, onDelete }) => {
               <h3 className="text-lg font-bold">{monitor.name}</h3>
             </div>
             <span className={`${
+              !isActive ? "bg-gray-500/10 text-gray-400 border-gray-500/20" :
               monitor.status === "up" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : 
               monitor.status === "warning" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : 
               "bg-rose-500/10 text-rose-400 border-rose-500/20"
             } text-xs font-medium px-2.5 py-1 rounded-full border`}>
-              {monitor.status === "up" ? "Operational" : 
+              {!isActive ? "Inactive" :
+               monitor.status === "up" ? "Operational" : 
                monitor.status === "warning" ? "Degraded" : 
                "Down"}
             </span>
+          </div>
+          
+          {/* Control buttons below status */}
+          <div className="flex justify-between items-center mb-4">
+            {/* Delete button on the left */}
+            <button 
+              onClick={handleDeleteClick}
+              className="p-2 bg-gray-700/70 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-rose-500/20 opacity-0 group-hover:opacity-100 transition-all shadow-sm z-10"
+              title="Delete monitor"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+            
+            {/* Toggle switch on the right */}
+            <button 
+              onClick={handleToggleClick}
+              className={`p-2 rounded-lg transition-all shadow-sm z-10 ${
+                isActive 
+                  ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 hover:text-emerald-300" 
+                  : "bg-gray-700/70 text-gray-400 hover:bg-gray-700 hover:text-gray-300"
+              }`}
+              title={isActive ? "Disable monitor" : "Enable monitor"}
+            >
+              <Power className="h-5 w-5" />
+            </button>
           </div>
           
           <p className="text-sm text-gray-400 mb-4 truncate">{monitor.url}</p>
@@ -80,7 +106,7 @@ const MonitorCard = ({ monitor, onDelete }) => {
                 <Clock className="h-3 w-3 mr-1.5" />
                 Uptime
               </p>
-              <p className="text-xl font-bold">{monitor.uptimePercentage.toFixed(2)}%</p>
+              <p className="text-xl font-bold">{isActive ? monitor.uptimePercentage.toFixed(2) : "0.00"}%</p>
             </div>
             <div className="p-3 rounded-lg bg-gray-900/80 border border-gray-700">
               <p className="text-xs text-gray-400 mb-1 flex items-center">
@@ -88,14 +114,14 @@ const MonitorCard = ({ monitor, onDelete }) => {
                 Response
               </p>
               <div className="flex items-center">
-                <p className="text-xl font-bold">{monitor.responseTime}ms</p>
+                <p className="text-xl font-bold">{isActive ? monitor.responseTime : "—"}ms</p>
               </div>
             </div>
           </div>
-
+          
           <div className="h-16 mb-3 relative">
             <div className="absolute inset-0 flex items-end gap-0.5">
-              {monitor.statusHistory.map((segment, i) => (
+              {isActive ? monitor.statusHistory.map((segment, i) => (
                 <div 
                   key={i}
                   style={{ height: `${Math.random() * 50 + 50}%` }}
@@ -105,7 +131,16 @@ const MonitorCard = ({ monitor, onDelete }) => {
                       : "bg-gradient-to-t from-rose-500/90 to-rose-400/50"
                   } rounded-t-sm`}
                 />
-              ))}
+              )) : (
+                // Inactive chart - gray bars
+                Array(30).fill(null).map((_, i) => (
+                  <div 
+                    key={i}
+                    style={{ height: `${Math.random() * 30 + 20}%` }}
+                    className="flex-1 bg-gradient-to-t from-gray-500/30 to-gray-400/10 rounded-t-sm"
+                  />
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -220,14 +255,13 @@ const AddMonitor = ({ isOpen, onClose, onAdd }) => {
           <div className="flex justify-end space-x-3 mt-8">
             <Button 
               onClick={onClose}
-              type="button"
               variant="ghost"
               className="text-sm"
             >
               Cancel
             </Button>
             <Button 
-              type="submit"
+              onClick={handleSubmit}
               className="text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
               Create Monitor
@@ -296,16 +330,46 @@ const Dashboard = () => {
   const [isAddMonitorOpen, setIsAddMonitorOpen] = useState(false);
   const [monitors, setMonitors] = useState(generateMockMonitors());
   const [searchQuery, setSearchQuery] = useState("");
+  const [monitorsActive, setMonitorsActive] = useState(true);
+  const [activeMonitorIds, setActiveMonitorIds] = useState(() => 
+    generateMockMonitors().map(monitor => monitor.id)
+  );
   
   // Handle adding a new monitor
   const handleAddMonitor = (newMonitor) => {
     setMonitors([...monitors, newMonitor]);
+    // Automatically set new monitor as active
+    setActiveMonitorIds([...activeMonitorIds, newMonitor.id]);
   };
   
   // Handle deleting a monitor
   const handleDeleteMonitor = (monitorId) => {
     if (confirm("Are you sure you want to delete this monitor?")) {
       setMonitors(monitors.filter(monitor => monitor.id !== monitorId));
+      setActiveMonitorIds(activeMonitorIds.filter(id => id !== monitorId));
+    }
+  };
+  
+  // Toggle monitors on/off globally
+  const toggleMonitors = () => {
+    const newState = !monitorsActive;
+    setMonitorsActive(newState);
+    
+    // If turning on monitors globally, restore previous active state
+    // If turning off monitors globally, keep track of active ids but don't show any
+    if (!newState) {
+      // Keep the active ids in memory but don't display any monitors
+    }
+  };
+  
+  // Toggle individual monitor active state
+  const toggleMonitor = (monitorId) => {
+    if (activeMonitorIds.includes(monitorId)) {
+      // Turn off this monitor
+      setActiveMonitorIds(activeMonitorIds.filter(id => id !== monitorId));
+    } else {
+      // Turn on this monitor
+      setActiveMonitorIds([...activeMonitorIds, monitorId]);
     }
   };
   
@@ -322,10 +386,15 @@ const Dashboard = () => {
   
   // Calculate statistics for the dashboard
   const totalMonitors = monitors.length;
-  const operationalCount = monitors.filter(m => m.status === "up").length;
-  const degradedCount = monitors.filter(m => m.status === "warning").length;
-  const downCount = monitors.filter(m => m.status === "down").length;
-  const averageUptime = monitors.reduce((acc, monitor) => acc + monitor.uptimePercentage, 0) / totalMonitors;
+  const activeMonitors = monitorsActive ? 
+    monitors.filter(monitor => activeMonitorIds.includes(monitor.id)) :
+    [];
+  const operationalCount = activeMonitors.filter(m => m.status === "up").length;
+  const degradedCount = activeMonitors.filter(m => m.status === "warning").length;
+  const downCount = activeMonitors.filter(m => m.status === "down").length;
+  const averageUptime = activeMonitors.length > 0 ? 
+    activeMonitors.reduce((acc, monitor) => acc + monitor.uptimePercentage, 0) / activeMonitors.length : 
+    0;
 
   return (
     <div className="min-h-screen pt-16 pb-12 animate-fade-in bg-gradient-to-b from-gray-900 via-gray-900 to-black">
@@ -340,6 +409,14 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex gap-3">
+              <Button 
+                variant={monitorsActive ? "default" : "outline"} 
+                className={`gap-1 px-3 ${!monitorsActive ? "text-red-400 border-red-400/50" : ""}`} 
+                onClick={toggleMonitors}
+              >
+                <Power className={`h-4 w-4 ${!monitorsActive ? "text-red-400" : ""}`} />
+                <span className="hidden md:inline">{monitorsActive ? "Turn Off All" : "Turn On All"}</span>
+              </Button>
               <Button variant="outline" className="gap-1 px-3" onClick={() => {}}>
                 <Bell className="h-4 w-4" />
                 <span className="hidden md:inline">Notifications</span>
@@ -386,7 +463,19 @@ const Dashboard = () => {
         
         {/* Monitor filters and search */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 bg-gray-800/50 p-4 rounded-lg border border-gray-700 backdrop-blur-sm">
-          <h2 className="text-xl font-semibold text-white">Your Monitors</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold text-white">Your Monitors</h2>
+            {!monitorsActive && (
+              <span className="bg-red-500/10 text-red-400 text-xs font-medium px-2.5 py-1 rounded-full border border-red-500/20">
+                All Monitoring Disabled
+              </span>
+            )}
+            {monitorsActive && activeMonitorIds.length < totalMonitors && (
+              <span className="bg-amber-500/10 text-amber-400 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-500/20">
+                {totalMonitors - activeMonitorIds.length} Disabled
+              </span>
+            )}
+          </div>
           <div className="flex w-full md:w-auto gap-3">
             <div className="relative flex-grow md:flex-grow-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -414,18 +503,39 @@ const Dashboard = () => {
         </div>
 
         {/* Monitors grid with improved spacing */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMonitors.map((monitor) => (
-            <MonitorCard 
-              key={monitor.id} 
-              monitor={monitor} 
-              onDelete={handleDeleteMonitor} 
-            />
-          ))}
-        </div>
+        {!monitorsActive ? (
+          <div className="flex flex-col items-center justify-center py-16 border border-gray-700 rounded-xl bg-gray-800/50 backdrop-blur-sm">
+            <div className="h-20 w-20 rounded-full bg-red-500/10 flex items-center justify-center mb-6 border border-red-500/30">
+              <Power className="h-10 w-10 text-red-400" />
+            </div>
+            <h3 className="text-2xl font-medium mb-3 text-white">Monitors Are Turned Off</h3>
+            <p className="text-gray-400 text-center max-w-md mb-8">
+              All monitoring activities are currently disabled. Click the button below to resume monitoring your systems.
+            </p>
+            <Button 
+              onClick={toggleMonitors}
+              className="px-6 py-2.5 text-base"
+            >
+              <Power className="h-5 w-5 mr-2" />
+              Turn On All Monitors
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredMonitors.map((monitor) => (
+              <MonitorCard 
+                key={monitor.id} 
+                monitor={monitor} 
+                onDelete={handleDeleteMonitor}
+                isActive={activeMonitorIds.includes(monitor.id)}
+                onToggle={toggleMonitor}
+              />
+            ))}
+          </div>
+        )}
         
         {/* Empty state with improved design - show when no monitors or no search results */}
-        {filteredMonitors.length === 0 && (
+        {monitorsActive && filteredMonitors.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 border border-gray-700 rounded-xl bg-gray-800/50 backdrop-blur-sm">
             <div className="h-20 w-20 rounded-full bg-indigo-500/10 flex items-center justify-center mb-6 border border-indigo-500/30">
               {searchQuery ? <Search className="h-10 w-10 text-indigo-400" /> : <BarChart className="h-10 w-10 text-indigo-400" />}
