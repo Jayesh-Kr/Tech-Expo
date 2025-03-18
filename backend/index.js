@@ -31,7 +31,6 @@ const ADMIN_PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
 app.post("/user", async (req, res) => {
   try {
     const user = await User.create({
-      _id: uuidv4(),
       email: req.body.email,
     });
 
@@ -46,9 +45,9 @@ app.post("/user", async (req, res) => {
 app.post("/website", authenticateUser, async (req, res) => {
   try {
     const website = await Website.create({
-      _id: uuidv4(),
       url: req.body.url,
       userId: req.user._id,
+      websiteName : req.body.websiteName
     });
     res.status(201).json(website);
   } catch (error) {
@@ -111,13 +110,19 @@ app.post("/validator", async (req, res) => {
 app.post("/validator-signin", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const getUser = await Validator.findOne({ email: email }, "email _id");
+    const getUser = await Validator.findOne({ email: email });
     if (!getUser) {
       return res.status(400).json({
         message: "Validator not found. SignUp to become a validator",
       });
     }
-    const token = jwt.sign({ token: user }, JWT_SECRET);
+    const decodedPassword = await bcrypt.compare(password, getUser.password);
+    if(!decodedPassword) {
+        return res.status(404).json({
+            message : "Invalid credentails"
+        });
+    }
+    const token = jwt.sign({ token: getUser }, JWT_SECRET);
     return res.status(200).json({
       token: token,
     });
@@ -212,7 +217,6 @@ app.post("/getPayout", authenticateUser, async (req, res) => {
 app.post("/website-tick", authenticateUser, async (req, res) => {
   try {
     const websiteTick = await WebsiteTick.create({
-      _id: uuidv4(),
       websiteId: req.body.websiteId,
       validatorId: req.body.validatorId,
       status: req.body.status,

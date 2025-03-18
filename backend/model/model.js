@@ -3,13 +3,12 @@ import mongoose from "mongoose";
 const websiteStatusEnum = ["Good", "Bad"];
 
 const userSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
   email: { type: String, required: true, unique: true },
 });
 
 const websiteSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
   url: { type: String, required: true },
+  websiteName : {type : String, required : true},
   userId: { type: String, required: true, ref: "User" },
   disabled: { type: Boolean, default: false },
 });
@@ -26,7 +25,6 @@ const validatorSchema = new mongoose.Schema({
 });
 
 const websiteTickSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
   websiteId: { type: String, required: true, ref: "Website" },
   validatorId: { type: String, required: true, ref: "Validator" },
   createdAt: { type: Date, required: true, default: Date.now },
