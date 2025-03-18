@@ -21,3 +21,172 @@
     scroll-behavior: auto;
   }
 }
+
+/* Button glow implementation */
+.button-glow-wrapper {
+  position: relative;
+  border-radius: 9999px;
+  padding: 3px;
+  background: linear-gradient(90deg, #9333ea, #ec4899, #9333ea);
+  background-size: 200% 200%;
+  animation: gradient-shift 3.5s ease infinite;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.button-glow-wrapper:before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  z-index: -1;
+  background: linear-gradient(90deg, #9333ea, #ec4899, #9333ea);
+  background-size: 200% 200%;
+  border-radius: 9999px;
+  filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: gradient-shift 3.5s ease infinite;
+}
+
+.button-glow-wrapper:hover {
+  opacity: 1;
+}
+
+.button-glow-wrapper:hover:before {
+  opacity: 0.7;
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Button shine effect */
+@keyframes button-shine {
+  0% {
+    left: -100%;
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    left: 200%;
+    opacity: 0;
+  }
+}
+
+/* Fixed button shine effect with animation-play-state logic */
+button.animate-button-shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transform: skewX(-25deg);
+  animation: button-shine 1s forwards paused;
+  animation-iteration-count: 1;
+}
+
+.group:hover button.animate-button-shine::before {
+  animation-play-state: running;
+}
+
+/* Group hover button shine effects are now controlled with animation-play-state */
+.group:hover button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transform: skewX(-25deg);
+  animation: button-shine 1s forwards paused;
+  animation-iteration-count: 1;
+  animation-play-state: running;
+}
+
+/* Glowing border animations */
+@keyframes border-rotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% { 
+    opacity: 0.5; 
+    box-shadow: 0 0 10px 2px rgba(168, 85, 247, 0.4);
+  }
+  50% { 
+    opacity: 0.6; 
+    box-shadow: 0 0 15px 3px rgba(236, 72, 153, 0.5); 
+  }
+}
+
+@layer utilities {
+  .animate-border-glow {
+    animation: border-glow 2.5s ease-in-out infinite, border-rotate 3.5s linear infinite;
+    background-size: 200% 200%;
+    opacity: 0.7;
+  }
+  
+  /* Using animation-play-state to control shine animation */
+  .animate-button-shine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transform: skewX(-25deg);
+    animation: button-shine 1s forwards paused;
+    animation-iteration-count: 1;
+  }
+  
+  .group:hover .animate-button-shine::before {
+    animation-play-state: running;
+  }
+}
+
+/* Add enhanced glow effect on hover */
+.group:hover .animate-border-glow {
+  box-shadow: 0 0 20px 4px rgba(236, 72, 153, 0.9);
+  animation: border-glow 1.2s ease-in-out infinite, border-rotate 2s linear infinite;
+  opacity: 1;
+}

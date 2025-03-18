@@ -152,12 +152,11 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 1.3 }}
             className="flex items-center justify-center mb-16"
           >
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur opacity-75 group-hover:opacity-100 transition-all duration-300"></div>
+            <div className="button-glow-wrapper group">
               <Link to="/sign-up">
-                <button className="relative bg-black px-8 py-4 rounded-full font-semibold text-white hover:text-white/90 transition-all duration-300">
+                <button className="relative px-8 py-4 bg-black border-2 border-transparent rounded-full font-semibold text-white transition-all duration-300 group-hover:scale-[0.98] overflow-hidden animate-button-shine">
                   <span className="flex items-center gap-2">
-                    Start Monitoring <ArrowRight size={18} />
+                    Start Monitoring <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
                 </button>
               </Link>
