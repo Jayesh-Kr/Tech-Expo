@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { verifyIPLocation } from "./utils/script.js";
 
 const app = express();
 app.use(cors());
@@ -64,6 +65,12 @@ app.get("/website/:id", authenticateUser, async (req, res) => {
 app.post("/validator", async (req, res) => {
     try {
         const {name,email,payoutPublicKey, publicKey,location,ip,password} = req.body;
+        const isValidLocation = await verifyIPLocation(ip,location);
+        if(!isValidLocation) {
+            return res.status(400).json({
+                message : "The provided IP address do not match with your location"
+            })
+        }
         let hashedPassword = await bcrypt.hash(password,10);
         const validator = await Validator.create({
             name : name,
