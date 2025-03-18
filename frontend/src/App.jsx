@@ -9,7 +9,8 @@ import Validator from './pages/Validator.jsx';
 import SignupValidator from './pages/SignupValidator.jsx';
 import SigninValidator from './pages/SigninValidator.jsx';
 import ValidatorDashboard from './pages/ValidatorDashboard.jsx';
-import Dashboard from './pages/Dashboard.jsx';
+import Dashboard from './pages/Dashboard.tsx';
+import MonitorDetails from './components/monitor/MonitorDetails.tsx';
 import clerkAppearance from './utils/clerkAppearance.js';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -195,6 +196,8 @@ const App = () => {
         } />
         
         {/* Protected validator routes */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/monitor/:id" element={<MonitorDetails />} />
         <Route path="/signup-validator" element={<SignupValidator />} />
         <Route path="/signin-validator" element={<SigninValidator />} />
         <Route path="/validator-dashboard" element={<ValidatorDashboard />} />
