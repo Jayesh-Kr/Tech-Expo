@@ -37,7 +37,7 @@ const ValidatorDashboard = () => {
 
       ws = new WebSocket("ws://localhost:8081");
 
-      ws.on("open", async () => {
+      ws.onopen = async () => {
         const callbackId = naclUtil.randomBytes(16).toString("hex");
         const signedMessage = await signMessage(
           `Signed message for ${callbackId}, ${naclUtil.encodeBase64(
@@ -57,9 +57,9 @@ const ValidatorDashboard = () => {
             },
           })
         );
-      });
+      };
 
-      ws.on("message", async (event) => {
+      ws.onmessage =async (event) => {
         const data = JSON.parse(event);
         if (data.type === "signup") {
           validatorIdRef.current = data.data.validatorId;
@@ -114,7 +114,7 @@ const ValidatorDashboard = () => {
             console.error(error);
           }
         }
-      });
+      };
       ws.onclose = () => {
         // Attempt to reconnect after 5 seconds if still validating
         if (isValidating) {
@@ -399,11 +399,15 @@ const ValidatorDashboard = () => {
               </div>
             </div>
             <div className="mt-4 text-center">
+              {/* TODO : FIX this error */}
               <button
-                className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors"
-                onClick={() => setIsValidating(!isValidating)}
+                className={`${
+                  isValidating ? 'bg-purple-600' : 'bg-purple-500 hover:bg-purple-600'
+                } text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50`}
+                onClick={() => { setIsValidating(!isValidating); console.log("Button clicked validating....")}}
+                // disabled={isValidating && !validatorIdRef.current}
               >
-                {isValidating ? "Validating" : "Start Validating"}
+                {isValidating ? (validatorIdRef.current ? 'Validating' : 'Connecting...') : 'Start Validating'}
               </button>
             </div>
           </motion.div>
