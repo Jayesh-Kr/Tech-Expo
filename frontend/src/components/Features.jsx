@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, ResponsiveContainer, XAxis, CartesianGrid, YAxis } from 'recharts';
 import { ArrowUpRight, BarChart3, PieChart, TrendingUp, BellRing, Zap, Clock, Smile } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 
 const chartData = [
   { time: '1 min', latency: 100 },
@@ -242,6 +244,19 @@ const StatCard = ({ title, value, subtitle, icon: Icon, startFrom, percentage })
 };
 
 const Features = () => {
+  const navigate = useNavigate();
+  const { isSignedIn } = useUser();
+  
+  const handleStartMonitoringClick = () => {
+    // For regular users, check if signed in with Clerk and redirect accordingly
+    if (isSignedIn) {
+      navigate('/dashboard');
+    } else {
+      // Changed to direct to validator dashboard without authentication
+      navigate('/validator-dashboard');
+    }
+  };
+
   return (
     <div id="features" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
       <div className="max-w-7xl mx-auto">
@@ -351,6 +366,14 @@ const Features = () => {
             />
           </div>
         </motion.div>
+        <div className="text-center mt-12">
+          <button 
+            onClick={handleStartMonitoringClick}
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            Start Monitoring
+          </button>
+        </div>
       </div>
     </div>
   );
