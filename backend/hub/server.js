@@ -2,18 +2,24 @@ import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 import mongoose from 'mongoose';
 import nacl from 'tweetnacl';
-import { decodeUTF8 } from 'tweetnacl-util';
+import nacl_util from "tweetnacl-util";
+import base58 from 'bs58';
 import { Website, Validator, WebsiteTick, DownLog } from '../model/model.js';
-
+import db from '../db/db.js';
 const CALLBACKS = {};
 const availableValidators = [];
 const COST_PER_VALIDATION = 100; // in lamports
 
 const wss = new WebSocketServer({ port: 8081 });
 
+console.log("Websocket server")
+
 wss.on('connection', async (ws) => {
+    console.log(ws._eventsCount);
     ws.on('message', async (message) => {
-        const data = JSON.parse(message);
+        try {
+            console.log(JSON.parse(message.toString()));
+        const data = JSON.parse(message.toString()); 
 
         if (data.type === 'signup') {
             const verified = await verifyMessage(
@@ -28,11 +34,15 @@ wss.on('connection', async (ws) => {
             CALLBACKS[data.data.callbackId](data);
             delete CALLBACKS[data.data.callbackId];
         }
+    } catch(err) {
+        console.log(err.message);
+    }
     });
 
     ws.on('close', () => {
         const index = availableValidators.findIndex(v => v.socket === ws);
         if (index !== -1) availableValidators.splice(index, 1);
+        console.log(`Validator removed from the array`);
     });
 });
 
@@ -53,6 +63,7 @@ async function signupHandler(ws, { ip, publicKey, signedMessage, callbackId }) {
             socket: ws,
             publicKey: validatorDb.publicKey,
         });
+        console.log(`Validator - ${validatorDb._id} successfully added in the array`);
         return;
     }
 
@@ -80,12 +91,17 @@ async function signupHandler(ws, { ip, publicKey, signedMessage, callbackId }) {
 }
 
 async function verifyMessage(message, publicKey, signature) {
-    const messageBytes = decodeUTF8(message);
-    return nacl.sign.detached.verify(
+    // console.log(message);
+    const messageBytes = nacl_util.decodeUTF8(message);
+    // console.log(messageBytes);
+    // console.log(publicKey);
+    const result =  nacl.sign.detached.verify(
         messageBytes,
         new Uint8Array(JSON.parse(signature)),
-        new Uint8Array(Buffer.from(publicKey, 'hex')),
+        base58.decode(publicKey),
     );
+    console.log(`Result : ${result}`);
+    return result;
 }
 
 // Website monitoring interval
