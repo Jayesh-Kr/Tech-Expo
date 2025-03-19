@@ -2,9 +2,9 @@ import axios from "axios"
 
 export const verifyIPLocation = async (ip,claimedLocation) => {
     try {
-        const response = await axios.get(`http://ip-api.com/json/${ip}`);
+        const response = await axios.get(`https://ipinfo.io/${ip}/json`);
         console.log("Verification started");
-        if(response.data.status === 'success') {
+        if(response) {
             const claimedLocationLower = claimedLocation.toLowerCase();
             const actualCity = response.data.city.toLowerCase();
             const actualCountry = response.data.country.toLowerCase();

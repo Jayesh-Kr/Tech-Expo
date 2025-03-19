@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Network, ChevronLeft } from 'lucide-react';
+import axios from 'axios';
 
 const SigninValidator = () => {
   const navigate = useNavigate();
@@ -33,13 +34,15 @@ const SigninValidator = () => {
     }
 
     try {
-      // Simulate authentication (replace with your actual auth logic)
-      setTimeout(() => {
-        console.log('Login with:', formData.email);
-        // Redirect to dashboard after login
-        navigate('/dashboard');
-        setIsSubmitting(false);
-      }, 1000);
+      const res = await axios.post("http://localhost:3000/validator-signin",{
+        email : formData.email,
+        password : formData.password,
+      })
+      console.log(res);
+      console.log(res.data.token);
+      localStorage.setItem("token",res.data.token);
+      setIsSubmitting(false);
+      navigate('/validator-dashboard');
     } catch (err) {
       setError('An authentication error occurred. Please try again.');
       console.error('Signin error:', err);
