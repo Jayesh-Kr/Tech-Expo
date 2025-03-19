@@ -36,7 +36,6 @@ const ValidatorDashboard = () => {
       const keypair = nacl.sign.keyPair.fromSecretKey(privateKeyBytes);
 
       ws = new WebSocket("ws://localhost:8081");
-      wsRef.current = ws;
 
       ws.on("open", async () => {
         const callbackId = naclUtil.randomBytes(16).toString("hex");
@@ -90,9 +89,9 @@ const ValidatorDashboard = () => {
                 },
               })
             );
-
-            // onStatusUpdate({ url, status, latency });
           } catch (error) {
+            try {
+            const coordinates = await getCurrentLocation();
             ws.send(
               JSON.stringify({
                 type: "validate",
@@ -102,11 +101,15 @@ const ValidatorDashboard = () => {
                   latency: 1000,
                   validatorId: validatorIdRef.current,
                   signedMessage: signature,
+                  coordinates : coordinates,
+                  location : location
                 },
               })
             );
-
-            // onStatusUpdate({ url, status: 'Bad', latency: 1000 });
+          } catch(err) {
+            console.log("Error in getting the location");
+            console.log(err.message);
+          }
             console.error(error);
           }
         }
@@ -133,6 +136,27 @@ const ValidatorDashboard = () => {
       if (ws) ws.close();
     };
   }, [isValidating]);
+
+  // Get current location
+  const getCurrentLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by your browser'));
+      } else {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            });
+          },
+          (error) => {
+            reject(error);
+          }
+        );
+      }
+    });
+  };
 
   // Function for signing msg
   const signMessage = async (message, keypair) => {
