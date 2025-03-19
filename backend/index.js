@@ -78,11 +78,18 @@ app.post("/validator", async (req, res) => {
   try {
     const { name, email, payoutPublicKey, publicKey, location, ip, password } =
       req.body;
-    const publicKeyDB = await Validator.findOne({ payoutPublicKey: payoutPublicKey });
+    const publicKeyDB = await Validator.findOne({ payoutPublicKey: payoutPublicKey }).select('payoutPublicKey');
+    const emailDB = await Validator.findOne({ email: email }).select('email');
     console.log("Public key : ", publicKeyDB);
+    console.log("Email : ",emailDB);
     if (publicKeyDB) {
       return res.status(400).json({
         message: "Your public key already exits",
+      });
+    }
+    if (emailDB) {
+      return res.status(400).json({
+        message: "Your email already exits",
       });
     }
     const isValidLocation = await verifyIPLocation(ip, location);
