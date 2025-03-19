@@ -1,50 +1,201 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Network, Server, Activity, Bell, Shield, Settings, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import {
+  Network,
+  Server,
+  Activity,
+  Bell,
+  Shield,
+  Settings,
+  LogOut,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import nacl from "tweetnacl";
+import naclUtil from "tweetnacl-util";
 
 const ValidatorDashboard = () => {
   const [isSignedIn, setIsSignedIn] = useState(true); // For demo purposes
   const [isLoaded, setIsLoaded] = useState(false);
-  const [userName, setUserName] = useState('Validator');
-  const [email, setEmail] = useState('validator@example.com');
-  const [publicKey, setPublicKey] = useState('0x1234567890abcdef'); // Mock public key
-  const [ipAddress, setIpAddress] = useState('192.168.1.1'); // Mock IP address
-  const [location, setLocation] = useState('Delhi, India'); // Mock location
-  const [averagePayout, setAveragePayout] = useState('0.01 ETH'); // Mock average payout
+  const [userName, setUserName] = useState("Validator");
+  const [email, setEmail] = useState("validator@example.com");
+  const [publicKey, setPublicKey] = useState("0x1234567890abcdef"); // Mock public key
+  const [ipAddress, setIpAddress] = useState("192.168.1.1"); // Mock IP address
+  const [location, setLocation] = useState("Delhi, India"); // Mock location
+  const [averagePayout, setAveragePayout] = useState("0.01 ETH"); // Mock average payout
+  const [isValidating, setIsValidating] = useState(false);
   const navigate = useNavigate();
+
+  // Start Validating
+  const validatorIdRef = useRef(null);
+
+  useEffect(() => {
+    let ws = null;
+    const connectWebsocket = () => {
+      const privateKeyBase64 = localStorage.getItem("privateKey");
+      const privateKeyBytes = naclUtil.decodeBase64(privateKeyBase64);
+      const keypair = nacl.sign.keyPair.fromSecretKey(privateKeyBytes);
+
+      ws = new WebSocket("ws://localhost:8081");
+      wsRef.current = ws;
+
+      ws.on("open", async () => {
+        const callbackId = naclUtil.randomBytes(16).toString("hex");
+        const signedMessage = await signMessage(
+          `Signed message for ${callbackId}, ${naclUtil.encodeBase64(
+            keypair.publicKey
+          )}`,
+          keypair
+        );
+
+        ws.send(
+          JSON.stringify({
+            type: "signup",
+            data: {
+              callbackId,
+              ip: "127.0.0.1",
+              publicKey: naclUtil.encodeBase64(keypair.publicKey),
+              signedMessage,
+            },
+          })
+        );
+      });
+
+      ws.on("message", async (event) => {
+        const data = JSON.parse(event);
+        if (data.type === "signup") {
+          validatorIdRef.current = data.data.validatorId;
+        } else if (data.type === "validate") {
+          const { url, callbackId } = data.data;
+          const startTime = Date.now();
+          const signature = await signMessage(
+            `Replying to ${callbackId}`,
+            keypair
+          );
+
+          try {
+            const response = await fetch(url);
+            const endTime = Date.now();
+            const latency = endTime - startTime;
+            const status = response.status;
+
+            ws.send(
+              JSON.stringify({
+                type: "validate",
+                data: {
+                  callbackId,
+                  status: status === 200 ? "Good" : "Bad",
+                  latency,
+                  validatorId: validatorIdRef.current,
+                  signedMessage: signature,
+                },
+              })
+            );
+
+            // onStatusUpdate({ url, status, latency });
+          } catch (error) {
+            ws.send(
+              JSON.stringify({
+                type: "validate",
+                data: {
+                  callbackId,
+                  status: "Bad",
+                  latency: 1000,
+                  validatorId: validatorIdRef.current,
+                  signedMessage: signature,
+                },
+              })
+            );
+
+            // onStatusUpdate({ url, status: 'Bad', latency: 1000 });
+            console.error(error);
+          }
+        }
+      });
+      ws.onclose = () => {
+        // Attempt to reconnect after 5 seconds if still validating
+        if (isValidating) {
+          console.log("WebSocket disconnected. Reconnecting...");
+          setTimeout(connectWebsocket, 5000);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        ws.close(); // This will trigger onclose and attempt reconnection
+      };
+    };
+
+    if (isValidating) {
+      connectWebsocket();
+    }
+
+    return () => {
+      if (ws) ws.close();
+    };
+  }, [isValidating]);
+
+  // Function for signing msg
+  const signMessage = async (message, keypair) => {
+    const messageBytes = naclUtil.decodeUTF8(message);
+    const signature = nacl.sign.detached(messageBytes, keypair.secretKey);
+    return JSON.stringify(Array.from(signature));
+  };
 
   // Simulate loading and auth check
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
     }, 800);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
   // Mock data for the dashboard
   const mockStats = {
     validations: 1248,
-    uptime: '2 hours',
-    rewards: '0.025 SOL',
-    status: 'Active'
+    uptime: "2 hours",
+    rewards: "0.025 SOL",
+    status: "Active",
   };
 
   const mockRecentActivity = [
-    { id: 1, type: 'Validation', status: 'Success', time: '5 minutes ago', website: 'example.com' },
-    { id: 2, type: 'Reward', status: 'Received', time: '2 hours ago', amount: '0.003 ETH' },
-    { id: 3, type: 'Validation', status: 'Success', time: '4 hours ago', website: 'test-api.io' },
-    { id: 4, type: 'System', status: 'Update', time: '1 day ago', details: 'Node software updated' }
+    {
+      id: 1,
+      type: "Validation",
+      status: "Success",
+      time: "5 minutes ago",
+      website: "example.com",
+    },
+    {
+      id: 2,
+      type: "Reward",
+      status: "Received",
+      time: "2 hours ago",
+      amount: "0.003 ETH",
+    },
+    {
+      id: 3,
+      type: "Validation",
+      status: "Success",
+      time: "4 hours ago",
+      website: "test-api.io",
+    },
+    {
+      id: 4,
+      type: "System",
+      status: "Update",
+      time: "1 day ago",
+      details: "Node software updated",
+    },
   ];
 
   const handleSignOut = () => {
     setIsSignedIn(false);
-    navigate('/signin-validator');
+    navigate("/signin-validator");
   };
 
   const handleWithdraw = () => {
-    alert('Withdraw function triggered');
+    alert("Withdraw function triggered");
     // Implement the logic to withdraw the amount
   };
 
@@ -58,7 +209,7 @@ const ValidatorDashboard = () => {
   }
 
   if (!isSignedIn) {
-    navigate('/signin-validator');
+    navigate("/signin-validator");
     return null;
   }
 
@@ -67,17 +218,27 @@ const ValidatorDashboard = () => {
       {/* Auth Status Indicator */}
       <div className="max-w-7xl mx-auto mb-4">
         <div className="bg-green-500/20 text-green-300 px-4 py-2 rounded-lg text-sm flex items-center">
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
           <span>Authentication successful! You're logged in as {email}</span>
         </div>
       </div>
-      
+
       <div className="max-w-7xl mx-auto">
         {/* Header with welcome message */}
         <div className="mb-8">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -85,18 +246,19 @@ const ValidatorDashboard = () => {
           >
             Welcome, {userName}
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-gray-400"
           >
-            Your validator node is online and actively contributing to the dPIN network.
+            Your validator node is online and actively contributing to the dPIN
+            network.
           </motion.p>
         </div>
 
         {/* Stats Overview */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -106,7 +268,9 @@ const ValidatorDashboard = () => {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Total Validations</p>
-                <h3 className="text-2xl font-bold text-white">{mockStats.validations}</h3>
+                <h3 className="text-2xl font-bold text-white">
+                  {mockStats.validations}
+                </h3>
               </div>
               <div className="p-2 bg-purple-500/20 rounded-lg">
                 <Activity className="h-5 w-5 text-purple-400" />
@@ -118,7 +282,9 @@ const ValidatorDashboard = () => {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Node Uptime</p>
-                <h3 className="text-2xl font-bold text-white">{mockStats.uptime}</h3>
+                <h3 className="text-2xl font-bold text-white">
+                  {mockStats.uptime}
+                </h3>
               </div>
               <div className="p-2 bg-green-500/20 rounded-lg">
                 <Server className="h-5 w-5 text-green-400" />
@@ -130,7 +296,9 @@ const ValidatorDashboard = () => {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Rewards Earned</p>
-                <h3 className="text-2xl font-bold text-white">{mockStats.rewards}</h3>
+                <h3 className="text-2xl font-bold text-white">
+                  {mockStats.rewards}
+                </h3>
               </div>
               <div className="p-2 bg-yellow-500/20 rounded-lg">
                 <Shield className="h-5 w-5 text-yellow-400" />
@@ -142,7 +310,9 @@ const ValidatorDashboard = () => {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Status</p>
-                <h3 className="text-2xl font-bold text-green-400">{mockStats.status}</h3>
+                <h3 className="text-2xl font-bold text-green-400">
+                  {mockStats.status}
+                </h3>
               </div>
               <div className="p-2 bg-blue-500/20 rounded-lg">
                 <Network className="h-5 w-5 text-blue-400" />
@@ -153,29 +323,36 @@ const ValidatorDashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main content area */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             className="lg:col-span-2"
           >
             <div className="bg-black/30 backdrop-blur-md rounded-xl border border-white/10 p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Recent Activity</h2>
-              
+              <h2 className="text-xl font-semibold text-white mb-4">
+                Recent Activity
+              </h2>
+
               <div className="space-y-4">
                 {mockRecentActivity.map((activity) => (
-                  <div 
+                  <div
                     key={activity.id}
                     className="bg-white/5 p-3 rounded-lg border border-white/5 flex justify-between items-center"
                   >
                     <div>
                       <div className="flex items-center">
-                        <span className="font-medium text-white">{activity.type}</span>
-                        <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
-                          activity.status === 'Success' || activity.status === 'Received' 
-                            ? 'bg-green-500/20 text-green-400' 
-                            : 'bg-blue-500/20 text-blue-400'
-                        }`}>
+                        <span className="font-medium text-white">
+                          {activity.type}
+                        </span>
+                        <span
+                          className={`ml-2 text-xs px-2 py-1 rounded-full ${
+                            activity.status === "Success" ||
+                            activity.status === "Received"
+                              ? "bg-green-500/20 text-green-400"
+                              : "bg-blue-500/20 text-blue-400"
+                          }`}
+                        >
                           {activity.status}
                         </span>
                       </div>
@@ -197,50 +374,85 @@ const ValidatorDashboard = () => {
               </div>
             </div>
             <div className="mt-4 text-center">
-              <button className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors">
-                Start Validating
+              <button
+                className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors"
+                onClick={() => setIsValidating(!isValidating)}
+              >
+                {isValidating ? "Validating" : "Start Validating"}
               </button>
             </div>
           </motion.div>
 
           {/* Sidebar */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
             className="lg:col-span-1"
           >
             <div className="bg-black/30 backdrop-blur-md rounded-xl border border-white/10 p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Validator Control Panel</h2>
-              
+              <h2 className="text-xl font-semibold text-white mb-4">
+                Validator Control Panel
+              </h2>
+
               <div className="space-y-2">
                 <button className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-lg text-left">
                   <div className="flex items-center">
                     <Settings className="h-5 w-5 text-gray-400 mr-3" />
                     <span className="text-white">Node Settings</span>
                   </div>
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
-                
+
                 <button className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-lg text-left">
                   <div className="flex items-center">
                     <Bell className="h-5 w-5 text-gray-400 mr-3" />
                     <span className="text-white">Notifications</span>
                   </div>
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
-                
+
                 <button className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-lg text-left">
                   <div className="flex items-center">
                     <Shield className="h-5 w-5 text-gray-400 mr-3" />
                     <span className="text-white">Security</span>
                   </div>
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
               </div>
@@ -249,18 +461,24 @@ const ValidatorDashboard = () => {
                 <div className="bg-white/5 rounded-lg p-4">
                   <div className="flex items-center space-x-3 mb-3">
                     <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                      {userName[0] || 'V'}
+                      {userName[0] || "V"}
                     </div>
                     <div>
                       <div className="font-medium text-white">{userName}</div>
                       <div className="text-sm text-gray-400">{email}</div>
-                      <div className="text-sm text-gray-400">Public Key: {publicKey}</div>
-                      <div className="text-sm text-gray-400">IP Address: {ipAddress}</div>
-                      <div className="text-sm text-gray-400">Location: {location}</div>
+                      <div className="text-sm text-gray-400">
+                        Public Key: {publicKey}
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        IP Address: {ipAddress}
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        Location: {location}
+                      </div>
                     </div>
                   </div>
-                  
-                  <button 
+
+                  <button
                     onClick={handleSignOut}
                     className="w-full mt-2 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2 rounded-lg transition-colors"
                   >
@@ -274,10 +492,14 @@ const ValidatorDashboard = () => {
                 <div className="bg-white/5 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <div className="font-medium text-white">Average Payout</div>
-                      <div className="text-sm text-gray-400">{averagePayout}</div>
+                      <div className="font-medium text-white">
+                        Average Payout
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        {averagePayout}
+                      </div>
                     </div>
-                    <button 
+                    <button
                       onClick={handleWithdraw}
                       className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors"
                     >
