@@ -14,6 +14,13 @@ import nacl from "tweetnacl";
 import naclUtil from "tweetnacl-util";
 
 const ValidatorDashboard = () => {
+
+  const navigate = useNavigate();
+
+  const token = localStorage.getItem("token");
+  if(!token) {
+    navigate("/signin-validator");
+  }
   const [isSignedIn, setIsSignedIn] = useState(true); // For demo purposes
   const [isLoaded, setIsLoaded] = useState(false);
   const [userName, setUserName] = useState("Validator");
@@ -23,7 +30,6 @@ const ValidatorDashboard = () => {
   const [location, setLocation] = useState("Delhi, India"); // Mock location
   const [averagePayout, setAveragePayout] = useState("0.01 ETH"); // Mock average payout
   const [isValidating, setIsValidating] = useState(false);
-  const navigate = useNavigate();
 
   // Start Validating
   const validatorIdRef = useRef(null);
