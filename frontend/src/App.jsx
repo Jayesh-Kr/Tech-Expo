@@ -151,14 +151,10 @@ const App = () => {
         <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
         <Route path="/signin" element={<Navigate to="/sign-in" replace />} />
         
-        {/* Protected validator routes */}
+        {/* Protected validator routes - Remove protection for validator-dashboard */}
         <Route path="/signup-validator" element={<SignupValidator />} />
         <Route path="/signin-validator" element={<SigninValidator />} />
-        <Route path="/validator-dashboard" element={
-          <ProtectedRoute>
-            <ValidatorDashboard />
-          </ProtectedRoute>
-        } />
+        <Route path="/validator-dashboard" element={<ValidatorDashboard />} />
         
         {/* Protected dashboard route */}
         <Route

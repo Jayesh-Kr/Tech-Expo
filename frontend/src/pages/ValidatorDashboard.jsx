@@ -239,11 +239,6 @@ const ValidatorDashboard = () => {
     );
   }
 
-  if (!isSignedIn) {
-    navigate("/signin-validator");
-    return null;
-  }
-
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8">
       {/* Auth Status Indicator */}
@@ -404,19 +399,26 @@ const ValidatorDashboard = () => {
                 </button>
               </div>
             </div>
-            <div className="mt-4 text-center">
-              {/* TODO : FIX this error */}
-              <button
-                className={`${
-                  isValidating ? 'bg-purple-600' : 'bg-purple-500 hover:bg-purple-600'
-                } text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50`}
-                onClick={() => { setIsValidating(!isValidating); console.log("Button clicked validating....")}}
-                // disabled={isValidating && !validatorIdRef.current}
-              >
-                {isValidating ? (validatorIdRef.current ? 'Validating' : 'Connecting...') : 'Start Validating'}
-              </button>
-            </div>
+
+            <div className="relative mt-4 text-center">
+  <button
+    className={`${
+      isValidating ? 'bg-purple-600' : 'bg-purple-500 hover:bg-purple-600'
+    } text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 zIndex=10`}
+    onClick={() => {
+      setIsValidating(!isValidating);
+      if (!isValidating) {
+        validatorIdRef.current = null; // Reset validatorId when stopping validation
+      }
+      console.log("Button clicked validating....");
+    }}
+    disabled={isValidating && !validatorIdRef.current}
+  >
+    {isValidating ? (validatorIdRef.current ? 'Validating' : 'Connecting...') : 'Start Validating'}
+  </button>
+</div>
           </motion.div>
+
 
           {/* Sidebar */}
           <motion.div
