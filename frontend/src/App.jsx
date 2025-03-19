@@ -18,6 +18,7 @@ import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
+import MonitorPage from "./components/monitor/MonitorPage";
 
 const App = () => {
   const location = useLocation();
@@ -175,6 +176,8 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+        
+        <Route path="/demo-monitor" element={<MonitorPage />} />
       </Routes>
       {!hideNavbarFooter && <Footer />}
     </div>
