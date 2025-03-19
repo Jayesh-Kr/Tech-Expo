@@ -32,9 +32,17 @@ const websiteTickSchema = new mongoose.Schema({
   latency: { type: Number, required: true },
 });
 
+const downLogSchema = new mongoose.Schema({
+  websiteId : {type : String, required: true, ref: "Website"},
+  createdAt: { type: Date, required: true, default: Date.now },
+  location : {type : String, required: true},
+  coordinates : {type : String, required : true}
+})
+
 const User = mongoose.model("User", userSchema);
 const Website = mongoose.model("Website", websiteSchema);
 const Validator = mongoose.model("Validator", validatorSchema);
 const WebsiteTick = mongoose.model("WebsiteTick", websiteTickSchema);
+const DownLog = mongoose.model("DownLog",downLogSchema);
 
-export { User, Website, Validator, WebsiteTick };
+export { User, Website, Validator, WebsiteTick, DownLog };

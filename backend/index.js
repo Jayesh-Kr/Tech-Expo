@@ -1,7 +1,7 @@
 import express from "express";
 import db from "./db/db.js";
 import { Website, Validator, WebsiteTick, User } from "./model/model.js";
-import { authenticateUser } from "./middleware.js";
+import { authenticateUser, authenticateValidator } from "./middleware.js";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import bcrypt from "bcrypt";
@@ -33,7 +33,7 @@ app.post("/user", async (req, res) => {
     const user = await User.create({
       email: req.body.email,
     });
-
+    console.log(user._id);
     const token = jwt.sign({ userId: user._id }, JWT_SECRET);
     res.status(201).json({ user, token });
   } catch (error) {
@@ -78,7 +78,8 @@ app.post("/validator", async (req, res) => {
   try {
     const { name, email, payoutPublicKey, publicKey, location, ip, password } =
       req.body;
-    const publicKeyDB = Validator.findOne({ publicKey: payoutPublicKey });
+    const publicKeyDB = await Validator.findOne({ payoutPublicKey: payoutPublicKey });
+    console.log("Public key : ", publicKeyDB);
     if (publicKeyDB) {
       return res.status(400).json({
         message: "Your public key already exits",
@@ -111,6 +112,7 @@ app.post("/validator-signin", async (req, res) => {
   try {
     const { email, password } = req.body;
     const getUser = await Validator.findOne({ email: email });
+    console.log(getUser._id);
     if (!getUser) {
       return res.status(400).json({
         message: "Validator not found. SignUp to become a validator",
@@ -122,7 +124,7 @@ app.post("/validator-signin", async (req, res) => {
             message : "Invalid credentails"
         });
     }
-    const token = jwt.sign({ token: getUser }, JWT_SECRET);
+    const token = jwt.sign({ userId: getUser._id }, JWT_SECRET);
     return res.status(200).json({
       token: token,
     });
@@ -135,9 +137,10 @@ app.post("/validator-signin", async (req, res) => {
 });
 
 // Fetch Validator Detail
-app.get("/validator-detail", authenticateUser, async (req, res) => {
+app.get("/validator-detail", authenticateValidator, async (req, res) => {
   try {
-    const { _id } = req.user;
+    const user = req.user;
+    const _id = user._id;
     const validatorDetails = await Validator.findById(_id).select("-password");
     const recentWebsites = await WebsiteTick.find({ validatorId: _id })
       .sort({ createdAt: -1 })
@@ -170,7 +173,7 @@ app.get("/validator-detail", authenticateUser, async (req, res) => {
   }
 });
 
-app.post("/getPayout", authenticateUser, async (req, res) => {
+app.post("/getPayout", authenticateValidator, async (req, res) => {
   try {
     const { _id } = req.user;
     const validator = await Validator.findById(_id).select(
@@ -214,7 +217,7 @@ app.post("/getPayout", authenticateUser, async (req, res) => {
 });
 
 // Website Tick Creation
-app.post("/website-tick", authenticateUser, async (req, res) => {
+app.post("/website-tick", async (req, res) => {
   try {
     const websiteTick = await WebsiteTick.create({
       websiteId: req.body.websiteId,
@@ -229,7 +232,7 @@ app.post("/website-tick", authenticateUser, async (req, res) => {
 });
 
 // Update Website Tick
-app.put("/website-tick/:id", authenticateUser, async (req, res) => {
+app.put("/website-tick/:id", async (req, res) => {
   try {
     const websiteTick = await WebsiteTick.findByIdAndUpdate(
       req.params.id,
@@ -249,6 +252,70 @@ app.put("/website-tick/:id", authenticateUser, async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
+// Update Website Tracking
+app.put("/webiste-track/:id",authenticateUser,async(req,res)=>{
+    try{
+        const website = await Website.findByIdAndUpdate(
+            req.params.id,
+            {
+            disabled: req.body.disabled
+            },
+            { new: true }
+        );
+
+        if (!website) {
+            return res.status(404).json({ message: "Website not found" });
+        }
+
+        res.json({website , message : "Updated successfully"});
+    }catch(err) {
+        res.status(400).json({message : err.message});
+    }
+})
+
+// Get Website Average Tick to Frontend
+app.get("/getWebsiteTick", authenticateUser, async (req, res) => {
+    try {
+      const { websiteId } = req.query;
+        console.log(websiteId);
+      if (!websiteId) {
+        return res.status(400).json({ error: "Website ID is required" });
+      }
+  
+      // Fetch all ticks for the website
+      const websiteTicks = await WebsiteTick.find({ websiteId });
+  
+      if (!websiteTicks.length) {
+        return res.status(404).json({ error: "No ticks found for this website" });
+      }
+  
+      // Group by 1-minute intervals
+      const groupedTicks = {};
+      websiteTicks.forEach((tick) => {
+        const minuteKey = new Date(tick.createdAt).setSeconds(0, 0); // Normalize to nearest minute
+  
+        if (!groupedTicks[minuteKey]) {
+          groupedTicks[minuteKey] = [];
+        }
+        groupedTicks[minuteKey].push(tick.latency);
+      });
+  
+      // Calculate average latency per minute interval
+      const averageLatencyPerMinute = Object.entries(groupedTicks).map(
+        ([timestamp, latencies]) => ({
+          timestamp: new Date(parseInt(timestamp)), // Convert back to readable format
+          averageLatency:
+            latencies.reduce((sum, latency) => sum + latency, 0) / latencies.length,
+        })
+      );
+  
+      return res.status(200).json(averageLatencyPerMinute);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
 
 // Delete Website
 app.delete("/website/:id", authenticateUser, async (req, res) => {

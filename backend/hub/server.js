@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import mongoose from 'mongoose';
 import nacl from 'tweetnacl';
 import { decodeUTF8 } from 'tweetnacl-util';
-import { Website, Validator, WebsiteTick } from '../model/model.js';
+import { Website, Validator, WebsiteTick, DownLog } from '../model/model.js';
 
 const CALLBACKS = {};
 const availableValidators = [];
@@ -118,10 +118,14 @@ setInterval(async () => {
                     }
                     if(status == "Bad") {
                         // Send Email to the user with coordinates and location
+                    await DownLog.create({
+                        websiteId : website._id,
+                        location : location,
+                        coordinates : JSON.stringify(coordinates)
+                    })
                     }
 
                     await WebsiteTick.create({
-                        _id: randomUUID(),
                         websiteId: website._id,
                         validatorId,
                         status,
