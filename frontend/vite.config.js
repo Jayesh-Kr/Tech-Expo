@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
       'process.env.REACT_APP_CLERK_PUBLISHABLE_KEY': JSON.stringify(env.VITE_CLERK_PUBLISHABLE_KEY),
     },
     server: {
-      port: 5173  // Default Vite port
+      port: 5173,  // Default Vite port
     },
     resolve: {
       alias: {
