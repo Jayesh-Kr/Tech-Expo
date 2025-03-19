@@ -66,6 +66,7 @@ const ValidatorDashboard = () => {
         } else if (data.type === "validate") {
           const { url, callbackId } = data.data;
           const startTime = Date.now();
+          let latency = 0;
           const signature = await signMessage(
             `Replying to ${callbackId}`,
             keypair
@@ -74,7 +75,7 @@ const ValidatorDashboard = () => {
           try {
             const response = await fetch(url);
             const endTime = Date.now();
-            const latency = endTime - startTime;
+            latency = endTime - startTime;
             const status = response.status;
 
             ws.send(
@@ -98,7 +99,7 @@ const ValidatorDashboard = () => {
                 data: {
                   callbackId,
                   status: "Bad",
-                  latency: 1000,
+                  latency: latency,
                   validatorId: validatorIdRef.current,
                   signedMessage: signature,
                   coordinates : coordinates,

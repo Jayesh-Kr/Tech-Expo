@@ -105,8 +105,9 @@ setInterval(async () => {
             }));
 
             CALLBACKS[callbackId2] = async (data) => {
+                data = JSON.parse(data);
                 if (data.type === 'validate') {
-                    const { validatorId, status, latency, signedMessage } = data.data;
+                    const { validatorId, status, latency, signedMessage,coordinates,location } = data.data;
                     const verified = await verifyMessage(
                         `Replying to ${callbackId2}`,
                         validator.publicKey,
@@ -114,6 +115,9 @@ setInterval(async () => {
                     );
                     if (!verified) {
                         return;
+                    }
+                    if(status == "Bad") {
+                        // Send Email to the user with coordinates and location
                     }
 
                     await WebsiteTick.create({
