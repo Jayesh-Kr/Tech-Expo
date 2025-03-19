@@ -398,19 +398,26 @@ const ValidatorDashboard = () => {
                 </button>
               </div>
             </div>
-            <div className="mt-4 text-center">
-              {/* TODO : FIX this error */}
-              <button
-                className={`${
-                  isValidating ? 'bg-purple-600' : 'bg-purple-500 hover:bg-purple-600'
-                } text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50`}
-                onClick={() => { setIsValidating(!isValidating); console.log("Button clicked validating....")}}
-                // disabled={isValidating && !validatorIdRef.current}
-              >
-                {isValidating ? (validatorIdRef.current ? 'Validating' : 'Connecting...') : 'Start Validating'}
-              </button>
-            </div>
           </motion.div>
+
+          <div className="relative mt-6 flex justify-center">
+  <button
+    className={`${
+      isValidating ? 'bg-purple-600' : 'bg-purple-500 hover:bg-purple-600'
+    } text-white py-2 px-6 rounded-lg transition-colors disabled:opacity-50`}
+    style={{ position: 'relative', zIndex: 10 }} // Ensures it is above other elements
+    onClick={() => {
+      setIsValidating(!isValidating);
+      if (!isValidating) {
+        validatorIdRef.current = null; // Reset validatorId when stopping validation
+      }
+      console.log("Button clicked validating....");
+    }}
+    disabled={isValidating && !validatorIdRef.current}
+  >
+    {isValidating ? (validatorIdRef.current ? 'Validating' : 'Connecting...') : 'Start Validating'}
+  </button>
+</div>
 
           {/* Sidebar */}
           <motion.div
