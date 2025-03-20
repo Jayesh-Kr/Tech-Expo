@@ -80,10 +80,13 @@ app.post("/validator", async (req, res) => {
   try {
     const { name, email, payoutPublicKey, publicKey, location, ip, password } =
       req.body;
-    const publicKeyDB = await Validator.findOne({ payoutPublicKey: payoutPublicKey }).select('payoutPublicKey');
-    const emailDB = await Validator.findOne({ email: email }).select('email');
+      console.log(`Payout publickey : ${payoutPublicKey}`);
+    const publicKeyDB = await Validator.findOne({
+      payoutPublicKey: payoutPublicKey,
+    }).select("payoutPublicKey");
+    const emailDB = await Validator.findOne({ email: email }).select("email");
     console.log("Public key : ", publicKeyDB);
-    console.log("Email : ",emailDB);
+    console.log("Email : ", emailDB);
     if (publicKeyDB) {
       return res.status(400).json({
         message: "Your public key already exits",
@@ -128,10 +131,10 @@ app.post("/validator-signin", async (req, res) => {
       });
     }
     const decodedPassword = await bcrypt.compare(password, getUser.password);
-    if(!decodedPassword) {
-        return res.status(404).json({
-            message : "Invalid credentails"
-        });
+    if (!decodedPassword) {
+      return res.status(404).json({
+        message: "Invalid credentails",
+      });
     }
     const token = jwt.sign({ userId: getUser._id }, JWT_SECRET);
     return res.status(200).json({
@@ -199,7 +202,7 @@ app.post("/getPayout", authenticateValidator, async (req, res) => {
         .json({ message: "No payout public key found for the user" });
     }
     if (pendingPayouts <= 0) {
-        return res.status(400).json({ message: "No pending payout available" });
+      return res.status(400).json({ message: "No pending payout available" });
     }
 
     const connection = new Connection(RPC_URL, "confirmed");
@@ -212,9 +215,11 @@ app.post("/getPayout", authenticateValidator, async (req, res) => {
       })
     );
     const fromKeypair = Keypair.fromSecretKey(ADMIN_PRIVATE_KEY);
-    const signature = await sendAndConfirmTransaction(connection, transferTransaction, [
-      fromKeypair,
-    ]);
+    const signature = await sendAndConfirmTransaction(
+      connection,
+      transferTransaction,
+      [fromKeypair]
+    );
     await Validator.findByIdAndUpdate(_id, { pendingPayouts: 0 });
     return res.status(200).json({ message: "Payout successful", signature });
   } catch (err) {
@@ -264,46 +269,47 @@ app.put("/webiste-track/:id",authenticateUser,async(req,res)=>{
 
 // Get Website Average Tick to Frontend
 app.get("/getWebsiteTick", authenticateUser, async (req, res) => {
-    try {
-      const { websiteId } = req.query;
-        console.log(websiteId);
-      if (!websiteId) {
-        return res.status(400).json({ error: "Website ID is required" });
-      }
-  
-      // Fetch all ticks for the website
-      const websiteTicks = await WebsiteTick.find({ websiteId });
-  
-      if (!websiteTicks.length) {
-        return res.status(404).json({ error: "No ticks found for this website" });
-      }
-  
-      // Group by 1-minute intervals
-      const groupedTicks = {};
-      websiteTicks.forEach((tick) => {
-        const minuteKey = new Date(tick.createdAt).setSeconds(0, 0); // Normalize to nearest minute
-  
-        if (!groupedTicks[minuteKey]) {
-          groupedTicks[minuteKey] = [];
-        }
-        groupedTicks[minuteKey].push(tick.latency);
-      });
-  
-      // Calculate average latency per minute interval
-      const averageLatencyPerMinute = Object.entries(groupedTicks).map(
-        ([timestamp, latencies]) => ({
-          timestamp: new Date(parseInt(timestamp)), // Convert back to readable format
-          averageLatency:
-            latencies.reduce((sum, latency) => sum + latency, 0) / latencies.length,
-        })
-      );
-  
-      return res.status(200).json(averageLatencyPerMinute);
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Internal server error" });
+  try {
+    const { websiteId } = req.headers;
+    console.log(websiteId);
+    if (!websiteId) {
+      return res.status(400).json({ error: "Website ID is required" });
     }
-  });
+
+    // Fetch all ticks for the website
+    const websiteTicks = await WebsiteTick.find({ websiteId });
+
+    if (!websiteTicks.length) {
+      return res.status(404).json({ error: "No ticks found for this website" });
+    }
+
+    // Group by 1-minute intervals
+    const groupedTicks = {};
+    websiteTicks.forEach((tick) => {
+      const minuteKey = new Date(tick.createdAt).setSeconds(0, 0); // Normalize to nearest minute
+
+      if (!groupedTicks[minuteKey]) {
+        groupedTicks[minuteKey] = [];
+      }
+      groupedTicks[minuteKey].push(tick.latency);
+    });
+
+    // Calculate average latency per minute interval
+    const averageLatencyPerMinute = Object.entries(groupedTicks).map(
+      ([timestamp, latencies]) => ({
+        timestamp: new Date(parseInt(timestamp)), // Convert back to readable format
+        averageLatency:
+          latencies.reduce((sum, latency) => sum + latency, 0) /
+          latencies.length,
+      })
+    );
+
+    return res.status(200).json(averageLatencyPerMinute);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // Delete Website
 app.delete("/website/:id", authenticateUser, async (req, res) => {
@@ -324,6 +330,92 @@ app.delete("/website/:id", authenticateUser, async (req, res) => {
     res.json({ message: "Website deleted successfully" });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+app.get("/dashboard-details", async (req, res) => {
+  try {
+    const userId = req.headers.id; // Assuming authentication middleware sets `req.user.id`
+
+    // Fetch all websites monitored by the user
+    const websites = await Website.find({ userId });
+
+    const disabledCount = websites.filter((site) => site.disabled).length;
+    const enabledCount = websites.length - disabledCount;
+    // Prepare response data
+    const dashboardDetails = await Promise.all(
+      websites.map(async (website) => {
+        // Fetch all ticks for the website
+        const ticks = await WebsiteTick.find({ websiteId: website._id });
+        const disabled = website.disabled;
+        const id = website._id;
+
+        // Wesbite ticks array
+        if (!ticks.length) {
+            return res.status(404).json({ error: "No ticks found for this website" });
+          }
+      
+          // Group by 1-minute intervals
+          const groupedTicks = {};
+          ticks.forEach((tick) => {
+            const minuteKey = new Date(tick.createdAt).setSeconds(0, 0); // Normalize to nearest minute
+      
+            if (!groupedTicks[minuteKey]) {
+              groupedTicks[minuteKey] = [];
+            }
+            groupedTicks[minuteKey].push(tick.latency);
+          });
+      
+          // Calculate average latency per minute interval
+          const averageLatencyPerMinute = Object.entries(groupedTicks).map(
+            ([timestamp, latencies]) => ({
+              timestamp: new Date(parseInt(timestamp)), // Convert back to readable format
+              averageLatency:
+                latencies.reduce((sum, latency) => sum + latency, 0) /
+                latencies.length,
+            })
+          );
+
+        const totalTicks = ticks.length;
+        const goodTicks = ticks.filter((tick) => tick.status === "Good").length;
+        const badTicks = totalTicks - goodTicks;
+
+        // Calculate uptime percentage
+        const uptimePercentage =
+          totalTicks > 0 ? (goodTicks / totalTicks) * 100 : 0;
+
+        // Get the latest 1-minute latency average
+        const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+        const recentTicks = ticks.filter(
+          (tick) => new Date(tick.createdAt) > oneMinuteAgo
+        );
+        const avgLatency =
+          recentTicks.length > 0
+            ? recentTicks.reduce((sum, tick) => sum + tick.latency, 0) /
+              recentTicks.length
+            : 0;
+
+        return {
+          websiteName: website.websiteName,
+          url: website.url,
+          uptimePercentage,
+          response: avgLatency.toFixed(2), // Rounds to 2 decimal places
+          averageLatencyPerMinute,
+          disabled,
+          id
+        };
+      })
+    );
+
+    res.json({
+      websiteCount: websites.length,
+      websites: dashboardDetails,
+      disabledCount,
+      enabledCount,
+    });
+  } catch (error) {
+    console.error("Error fetching dashboard details:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
