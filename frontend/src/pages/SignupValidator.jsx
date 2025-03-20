@@ -47,6 +47,8 @@ const SignupValidator = () => {
   };
 
   const checkBalance = async (publicKey) => {
+    console.log("Checking balance called");
+    console.log(`Payout Public Key : ${publicKey}`)
     const alchemyUrl = import.meta.env.VITE_ALCHEMY_URL;
     try {
       const connection = new Connection(alchemyUrl);
@@ -90,6 +92,8 @@ const SignupValidator = () => {
     try {
       const { name, email, password, location, payoutPublicKey } = formData;
       const { publicKey, privateKey } = keyPair;
+      console.log(`PayoutPublic Key : ${payoutPublicKey}`);
+      console.log(`publickey Key : ${publicKey}`);
       const ipResponse = await axios("https://ipinfo.io/json");
       const userIP = ipResponse.data.ip;
       console.log(`User I.P. : ${userIP}`);
@@ -257,10 +261,10 @@ const SignupValidator = () => {
                   </label>
                   <input
                     type="text"
-                    name="publicKey"
-                    value={formData.publicKey}
+                    name="payoutPublicKey"
+                    value={formData.payoutPublicKey}
                     onChange={handleChange}
-                    onBlur={() => checkBalance(formData.publicKey)}
+                    onBlur={() => checkBalance(formData.payoutPublicKey)}
                     className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white"
                     placeholder="Enter your public key"
                   />
