@@ -6,10 +6,17 @@ const { loadPrivateKey } = require("./auth");
 const fs = require("fs");
 const path = require("path");
 const logger = require("../utils/logger");
+const { execSync } = require('child_process');
+const http = require('http');
+const https = require('https');
+const network = require('../utils/network');
+const chalk = require('chalk'); // Add chalk import to fix the reference error
 
 let validatorId = null;
 let location = "Unknown";
+let ipAddress = "Unknown";
 let wsConnection = null;
+let lastPingTime = null;
 
 const signMessage = (message, keypair) => {
   const messageBytes = naclUtil.decodeUTF8(message);
@@ -17,13 +24,20 @@ const signMessage = (message, keypair) => {
   return JSON.stringify(Array.from(signature));
 };
 
-const getLocation = async () => {
+const getLocationAndIp = async () => {
   try {
     const response = await axios.get("https://ipinfo.io/json");
-    return `${response.data.city}, ${response.data.region}, ${response.data.country}`;
+    ipAddress = response.data.ip || "Unknown";
+    return {
+      location: `${response.data.city}, ${response.data.region}, ${response.data.country}`,
+      ipAddress
+    };
   } catch (error) {
-    logger.error(`Failed to get location: ${error.message}`);
-    return "Unknown";
+    logger.error(`Failed to get location and IP: ${error.message}`);
+    return {
+      location: "Unknown",
+      ipAddress: "Unknown"
+    };
   }
 };
 
@@ -79,16 +93,30 @@ const pingURL = async (url, ws, keypair) => {
   
   logger.log(`Pinging: ${url}`);
   
-  const startTime = Date.now();
-  let latency = 0;
-  const signature = signMessage(`Manual ping for ${callbackId}`, keypair);
-  
   try {
-    const response = await axios.get(url, { timeout: 10000 });
-    const endTime = Date.now();
-    latency = endTime - startTime;
+    // Only get network ping, don't calculate HTTP latency
+    const results = await network.measureLatency(url, {
+      preferNetworkPing: true,
+      timeout: 3000
+    });
     
-    logger.success(`Ping successful: ${response.status} (${latency}ms)`);
+    logger.network(`Network latency: ${results.networkPing || 'N/A'}ms`);
+    
+    // Use only network ping or 0 if unavailable
+    const latency = results.networkPing || 0;
+    
+    const signature = signMessage(`Manual ping for ${callbackId}`, keypair);
+    
+    // Only show warning for high latency
+    if (latency > 200 && latency < 1000) {
+      logger.warn(`Moderate latency detected (${latency}ms)`);
+    } else if (latency >= 1000) {
+      logger.warn(`High latency detected (${latency}ms)`);
+    } else if (latency > 0) {
+      logger.success(`Good latency: ${latency}ms`);
+    }
+    
+    lastPingTime = Date.now();
     
     ws.send(
       JSON.stringify({
@@ -96,16 +124,21 @@ const pingURL = async (url, ws, keypair) => {
         data: {
           callbackId,
           url,
-          status: response.status === 200 ? "Good" : "Bad",
-          latency,
+          status: results.status === 200 ? "Good" : "Bad",
+          latency: latency,
+          networkLatency: results.networkPing,
           validatorId,
           signedMessage: signature,
           location,
+          ipAddress,
         },
       })
     );
   } catch (error) {
     logger.error(`Ping failed: ${error.message}`);
+    
+    const signature = signMessage(`Manual ping for ${callbackId}`, keypair);
+    lastPingTime = Date.now();
     
     ws.send(
       JSON.stringify({
@@ -114,10 +147,11 @@ const pingURL = async (url, ws, keypair) => {
           callbackId,
           url,
           status: "Bad",
-          latency: Date.now() - startTime,
+          latency: 0,
           validatorId,
           signedMessage: signature,
           location,
+          ipAddress,
         },
       })
     );
@@ -127,13 +161,27 @@ const pingURL = async (url, ws, keypair) => {
 const startValidator = async (spinner) => {
   const keypair = await loadPrivateKey();
   const config = loadConfig();
-  location = await getLocation();
+  
+  // Set default latency settings if not specified
+  if (!config.latencySettings) {
+    config.latencySettings = {
+      timeout: 5000,
+      maxRedirects: 0,
+      disableCache: true
+    };
+  }
+  
+  const locationData = await getLocationAndIp();
+  location = locationData.location;
+  ipAddress = locationData.ipAddress;
   
   if (spinner) {
+    spinner.color = 'cyan';
     spinner.text = 'Connecting to hub server...';
   }
   
   logger.log(`Validator location: ${location}`);
+  logger.log(`Validator IP address: ${ipAddress}`);
   if (config.targetURL) {
     logger.log(`Target URL: ${config.targetURL}`);
   } else {
@@ -147,7 +195,7 @@ const startValidator = async (spinner) => {
 
     ws.on("open", async () => {
       if (spinner) {
-        spinner.succeed('Connected to WebSocket hub!');
+        spinner.succeed(chalk.greenBright('Connected to WebSocket hub!'));
       } else {
         logger.success("Connected to WebSocket hub!");
       }
@@ -166,7 +214,7 @@ const startValidator = async (spinner) => {
           type: "signup",
           data: {
             callbackId,
-            ip: "127.0.0.1",
+            ip: ipAddress,
             publicKey: naclUtil.encodeBase64(keypair.publicKey),
             signedMessage,
             location,
@@ -200,30 +248,34 @@ const startValidator = async (spinner) => {
           }
         } else if (data.type === "validate") {
           const { url, callbackId } = data.data;
-          logger.log(`Received validation request for URL: ${url}`);
+          logger.ping(`Received validation request for URL: ${url}`);
           
-          const startTime = Date.now();
-          let latency = 0;
-
           const signature = signMessage(`Replying to ${callbackId}`, keypair);
 
           try {
-            const response = await axios.get(url, { timeout: 10000 });
-            const endTime = Date.now();
-            latency = endTime - startTime;
-
-            logger.success(`Validation complete: ${response.status} (${latency}ms)`);
+            // Only measure network ping, no HTTP latency
+            const results = await network.measureLatency(url, {
+              preferNetworkPing: true,
+              timeout: 3000
+            });
+            
+            const latency = results.networkPing || 0;
+            
+            logger.network(`Network latency: ${latency}ms`);
+            logger.success(`Validation complete: status ${results.status}`);
 
             ws.send(
               JSON.stringify({
                 type: "validate",
                 data: {
                   callbackId,
-                  status: response.status === 200 ? "Good" : "Bad",
-                  latency,
+                  status: results.status >= 200 && results.status < 300 ? "Good" : "Bad",
+                  latency: latency,
+                  networkLatency: results.networkPing,
                   validatorId,
                   signedMessage: signature,
                   location,
+                  ipAddress,
                 },
               })
             );
@@ -236,10 +288,11 @@ const startValidator = async (spinner) => {
                 data: {
                   callbackId,
                   status: "Bad",
-                  latency: Date.now() - startTime,
+                  latency: 0,
                   validatorId,
                   signedMessage: signature,
                   location,
+                  ipAddress,
                 },
               })
             );
@@ -268,10 +321,10 @@ const startValidator = async (spinner) => {
   
   // Set up automatic pinging if specified in config
   if (config.targetURL && config.pingInterval) {
-    logger.log(`Starting automatic pinging of ${config.targetURL} every ${config.pingInterval/1000} seconds`);
+    logger.ping(`Starting automatic pinging of ${config.targetURL} every ${config.pingInterval/1000} seconds`);
     setInterval(() => {
       if (validatorId && wsConnection && wsConnection.readyState === WebSocket.OPEN) {
-        logger.log("Performing scheduled ping...");
+        logger.ping("Performing scheduled ping...");
         pingURL(config.targetURL, wsConnection, keypair);
       }
     }, config.pingInterval);
@@ -284,6 +337,7 @@ const getValidatorStatus = () => {
     connected: wsConnection && wsConnection.readyState === WebSocket.OPEN,
     validatorId,
     location,
+    ipAddress,
     lastPingTime: lastPingTime || null
   };
 };
