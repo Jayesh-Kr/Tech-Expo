@@ -43,6 +43,7 @@ app.post("/user", async (req, res) => {
 // authenticatUser middleware -> add
 app.post("/website",authenticateUser, async (req, res) => {
   try {
+    console.log("Reacher cretion of the server");
     const website = await Website.create({
       url: req.body.url,
       userId: req.auth.userId,
@@ -247,12 +248,14 @@ app.post("/website-tick", async (req, res) => {
 
 
 // Update Website Tracking
-app.put("/webiste-track/:id",authenticateUser,async(req,res)=>{
+app.put("/website-track/:id", authenticateUser ,async(req,res)=>{
+    console.log("Reached the update section");
     try{
+        const disabled = await Website.findById({_id : req.params.id}).select("disabled");
         const website = await Website.findByIdAndUpdate(
             req.params.id,
             {
-            disabled: req.body.disabled
+            disabled: !disabled.disabled
             },
             { new: true }
         );
@@ -260,10 +263,9 @@ app.put("/webiste-track/:id",authenticateUser,async(req,res)=>{
         if (!website) {
             return res.status(404).json({ message: "Website not found" });
         }
-
         res.json({website , message : "Updated successfully"});
     }catch(err) {
-        res.status(400).json({message : err.message});
+        res.status(400).json({message : err.message , warning : "Update nhi ho raha bhai"});
     }
 })
 
@@ -326,46 +328,55 @@ app.delete("/website/:id", authenticateUser, async (req, res) => {
 
     // Also delete related website ticks
     await WebsiteTick.deleteMany({ websiteId: req.params.id });
-
+    console.log("deleted website succesully");
     res.json({ message: "Website deleted successfully" });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 });
 
-app.get("/dashboard-details", async (req, res) => {
-  try {
-    const userId = req.headers.id; // Assuming authentication middleware sets `req.user.id`
-
-    // Fetch all websites monitored by the user
-    const websites = await Website.find({ userId });
-
-    const disabledCount = websites.filter((site) => site.disabled).length;
-    const enabledCount = websites.length - disabledCount;
-    // Prepare response data
-    const dashboardDetails = await Promise.all(
-      websites.map(async (website) => {
-        // Fetch all ticks for the website
-        const ticks = await WebsiteTick.find({ websiteId: website._id });
-        const disabled = website.disabled;
-        const id = website._id;
-
-        // Wesbite ticks array
-        if (!ticks.length) {
-            return res.status(404).json({ error: "No ticks found for this website" });
+app.get("/dashboard-details", authenticateUser, async (req, res) => {
+    try {
+      const userId = req.auth.userId; // Assuming authentication middleware sets `req.user`
+  
+      // Fetch all websites monitored by the user
+      const websites = await Website.find({ userId });
+  
+      const disabledCount = websites.filter((site) => site.disabled).length;
+      const enabledCount = websites.length - disabledCount;
+  
+      // Prepare response data
+      const dashboardDetails = await Promise.all(
+        websites.map(async (website) => {
+          // Fetch all ticks for the website
+          const ticks = await WebsiteTick.find({ websiteId: website._id });
+          const disabled = website.disabled;
+          const id = website._id;
+  
+          // If no ticks are found, return default values
+          if (!ticks.length) {
+            return {
+              websiteName: website.websiteName,
+              url: website.url,
+              uptimePercentage: 0, // Default uptime percentage
+              response: 0, // Default response time
+              averageLatencyPerMinute: [], // Empty array for latency data
+              disabled,
+              id,
+            };
           }
-      
+  
           // Group by 1-minute intervals
           const groupedTicks = {};
           ticks.forEach((tick) => {
             const minuteKey = new Date(tick.createdAt).setSeconds(0, 0); // Normalize to nearest minute
-      
+  
             if (!groupedTicks[minuteKey]) {
               groupedTicks[minuteKey] = [];
             }
             groupedTicks[minuteKey].push(tick.latency);
           });
-      
+  
           // Calculate average latency per minute interval
           const averageLatencyPerMinute = Object.entries(groupedTicks).map(
             ([timestamp, latencies]) => ({
@@ -375,49 +386,49 @@ app.get("/dashboard-details", async (req, res) => {
                 latencies.length,
             })
           );
-
-        const totalTicks = ticks.length;
-        const goodTicks = ticks.filter((tick) => tick.status === "Good").length;
-        const badTicks = totalTicks - goodTicks;
-
-        // Calculate uptime percentage
-        const uptimePercentage =
-          totalTicks > 0 ? (goodTicks / totalTicks) * 100 : 0;
-
-        // Get the latest 1-minute latency average
-        const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-        const recentTicks = ticks.filter(
-          (tick) => new Date(tick.createdAt) > oneMinuteAgo
-        );
-        const avgLatency =
-          recentTicks.length > 0
-            ? recentTicks.reduce((sum, tick) => sum + tick.latency, 0) /
-              recentTicks.length
-            : 0;
-
-        return {
-          websiteName: website.websiteName,
-          url: website.url,
-          uptimePercentage,
-          response: avgLatency.toFixed(2), // Rounds to 2 decimal places
-          averageLatencyPerMinute,
-          disabled,
-          id
-        };
-      })
-    );
-
-    res.json({
-      websiteCount: websites.length,
-      websites: dashboardDetails,
-      disabledCount,
-      enabledCount,
-    });
-  } catch (error) {
-    console.error("Error fetching dashboard details:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+  
+          const totalTicks = ticks.length;
+          const goodTicks = ticks.filter((tick) => tick.status === "Good").length;
+          const badTicks = totalTicks - goodTicks;
+  
+          // Calculate uptime percentage
+          const uptimePercentage =
+            totalTicks > 0 ? (goodTicks / totalTicks) * 100 : 0;
+  
+          // Get the latest 1-minute latency average
+          const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+          const recentTicks = ticks.filter(
+            (tick) => new Date(tick.createdAt) > oneMinuteAgo
+          );
+          const avgLatency =
+            recentTicks.length > 0
+              ? recentTicks.reduce((sum, tick) => sum + tick.latency, 0) /
+                recentTicks.length
+              : 0;
+  
+          return {
+            websiteName: website.websiteName,
+            url: website.url,
+            uptimePercentage,
+            response: avgLatency.toFixed(2), // Rounds to 2 decimal places
+            averageLatencyPerMinute,
+            disabled,
+            id,
+          };
+        })
+      );
+  
+      res.json({
+        websiteCount: websites.length,
+        websites: dashboardDetails,
+        disabledCount,
+        enabledCount,
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard details:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

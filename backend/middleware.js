@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { configDotenv } from 'dotenv';
 import { User, Validator } from './model/model.js';
+import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node';
 configDotenv();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 export const authenticateUser = ClerkExpressRequireAuth();
