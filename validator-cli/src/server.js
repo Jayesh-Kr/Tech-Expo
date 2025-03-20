@@ -5,15 +5,15 @@ const logger = require("../utils/logger");
 
 const PORT = process.env.PORT || 8081;
 
-// Display ASCII art banner
-console.log(figlet.textSync('Validator Hub', {
+// Display ASCII art banner with updated colors
+console.log(chalk.magentaBright(figlet.textSync('Validator Hub', {
   font: 'Standard',
   horizontalLayout: 'default',
   verticalLayout: 'default'
-}));
+})));
 
-console.log(chalk.cyan("Decentralized Uptime Monitoring Hub Server"));
-console.log(chalk.cyan("=========================================\n"));
+console.log(chalk.greenBright("Decentralized Uptime Monitoring Hub Server"));
+console.log(chalk.greenBright("=========================================\n"));
 
 const wss = new WebSocket.Server({ port: PORT }, () => {
   logger.success(`WebSocket Hub Server running on ws://localhost:${PORT}`);
@@ -41,11 +41,13 @@ wss.on("connection", (ws, req) => {
           location: data.data.location || "Unknown",
           connectionTime: new Date(),
           lastActive: new Date(),
-          ip: clientIp
+          ip: data.data.ip || clientIp, // Use provided IP or connection IP
+          clientIp // Also store the connection IP
         });
         
         logger.success(`Validator signed up with ID: ${validatorId}`);
         logger.data(`Public key: ${publicKey.substring(0, 16)}...`);
+        logger.data(`IP address: ${data.data.ip || clientIp}`);
         
         ws.send(
           JSON.stringify({
@@ -63,12 +65,13 @@ wss.on("connection", (ws, req) => {
         if (validatorInfo) {
           validators.set(data.data.validatorId, {
             ...validatorInfo,
-            lastActive: new Date()
+            lastActive: new Date(),
+            ip: data.data.ipAddress || validatorInfo.ip // Update IP if provided
           });
         }
         
         logger.data(
-          `Validator ${data.data.validatorId} checked ${data.data.url}: ${data.data.status} with latency: ${data.data.latency}ms`
+          `Validator ${data.data.validatorId} (${data.data.ipAddress || "Unknown IP"}) checked ${data.data.url}: ${data.data.status} with network ping: ${data.data.networkLatency || data.data.latency}ms`
         );
       }
     } catch (error) {
@@ -90,16 +93,16 @@ wss.on("connection", (ws, req) => {
   });
 });
 
-// Display stats periodically
+// Display stats periodically with improved colors
 setInterval(() => {
   if (validators.size > 0) {
-    console.log(chalk.cyan("\n--- Hub Statistics ---"));
-    console.log(chalk.white(`Active validators: ${validators.size}`));
-    console.log(chalk.white("Active connections:"));
+    console.log(chalk.magentaBright("\n--- Hub Statistics ---"));
+    console.log(chalk.cyanBright(`Active validators: ${validators.size}`));
+    console.log(chalk.cyanBright("Active connections:"));
     
     validators.forEach((info, id) => {
       const lastActiveTime = Math.round((new Date() - info.lastActive) / 1000);
-      console.log(chalk.white(`  - ${id} (${info.location}): Last active ${lastActiveTime}s ago`));
+      console.log(chalk.blueBright(`  - ${id} (${info.location}): IP: ${info.ip}, Last active ${lastActiveTime}s ago`));
     });
   }
 }, 30000); // Every 30 seconds
