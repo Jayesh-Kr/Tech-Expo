@@ -1,0 +1,5 @@
+{
+  "hubServer": "ws://localhost:8081",
+  "pingInterval": 10000,
+  "targetURL": "https://www.google.com"
+}
