@@ -42,11 +42,12 @@ app.post("/user", async (req, res) => {
 });
 
 // Website Creation
-app.post("/website", authenticateUser, async (req, res) => {
+// authenticatUser middleware -> add
+app.post("/website", async (req, res) => {
   try {
     const website = await Website.create({
       url: req.body.url,
-      userId: req.user._id,
+      userId: req.body._id,
       websiteName : req.body.websiteName
     });
     res.status(201).json(website);
