@@ -65,6 +65,10 @@ export default {
         "pulse-green": "pulseGreen 2s infinite",
         "pulse-red": "pulseRed 1.5s infinite",
         "pulse-yellow": "pulseYellow 2s infinite",
+        "float-medium": "float 6s ease-in-out infinite",
+        "float-fast": "float 4s ease-in-out infinite",
+        "slide-up": "slideUp 0.5s ease-out forwards",
+        "fade-in": "fadeIn 0.5s ease-out forwards",
       },
       colors: {
         success: "hsl(var(--success))",

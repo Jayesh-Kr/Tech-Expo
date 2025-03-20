@@ -190,3 +190,8 @@ button.animate-button-shine::before {
   animation: border-glow 1.2s ease-in-out infinite, border-rotate 2s linear infinite;
   opacity: 1;
 }
+
+/* Add custom grid template columns for 30 equal columns */
+.grid-cols-30 {
+  grid-template-columns: repeat(30, minmax(0, 1fr));
+}
