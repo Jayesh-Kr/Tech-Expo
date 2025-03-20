@@ -18,7 +18,7 @@ wss.on('connection', async (ws) => {
     console.log(ws._eventsCount);
     ws.on('message', async (message) => {
         try {
-            console.log(JSON.parse(message.toString()));
+            // console.log(JSON.parse(message.toString()));
         const data = JSON.parse(message.toString()); 
 
         if (data.type === 'signup') {
@@ -31,11 +31,13 @@ wss.on('connection', async (ws) => {
                 await signupHandler(ws, data.data);
             }
         } else if (data.type === 'validate') {
+            console.log(`Console in line number 34 : ${data}`);
+            console.log(data);
             CALLBACKS[data.data.callbackId](data);
             delete CALLBACKS[data.data.callbackId];
         }
     } catch(err) {
-        console.log(err.message);
+        console.log(err);
     }
     });
 
@@ -48,7 +50,7 @@ wss.on('connection', async (ws) => {
 
 async function signupHandler(ws, { ip, publicKey, signedMessage, callbackId }) {
     const validatorDb = await Validator.findOne({ publicKey });
-
+    console.log("Came to signUpHandler")
     if (validatorDb) {
         ws.send(JSON.stringify({
             type: 'signup',
@@ -121,9 +123,9 @@ setInterval(async () => {
             }));
 
             CALLBACKS[callbackId2] = async (data) => {
-                data = JSON.parse(data);
                 if (data.type === 'validate') {
-                    const { validatorId, status, latency, signedMessage,coordinates,location } = data.data;
+                    const { validatorId, status, latency, signedMessage,location } = data.data;
+                    console.log(location);
                     const verified = await verifyMessage(
                         `Replying to ${callbackId2}`,
                         validator.publicKey,
@@ -137,7 +139,6 @@ setInterval(async () => {
                     await DownLog.create({
                         websiteId : website._id,
                         location : location,
-                        coordinates : JSON.stringify(coordinates)
                     })
                     }
 
@@ -157,4 +158,4 @@ setInterval(async () => {
             };
         });
     }
-}, 60 * 1000);
+}, 15 * 1000);

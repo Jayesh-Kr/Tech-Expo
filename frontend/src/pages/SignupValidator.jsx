@@ -22,7 +22,7 @@ const SignupValidator = () => {
     password: "",
     confirmPassword: "",
     name: "",
-    publicKey: "",
+    payoutPublicKey: "",
     location: "",
   });
   const [error, setError] = useState("");
@@ -43,7 +43,7 @@ const SignupValidator = () => {
     const keyPair = Keypair.generate();
     const publicKey = keyPair.publicKey.toString();
     const privateKey = naclUtil.encodeBase64(keyPair.secretKey);
-    setKeyPair({ payoutPublicKey: publicKey, privateKey });
+    setKeyPair({ publicKey: publicKey, privateKey });
   };
 
   const checkBalance = async (publicKey) => {
@@ -52,7 +52,7 @@ const SignupValidator = () => {
       const connection = new Connection(alchemyUrl);
       const balance = await connection.getBalance(new PublicKey(publicKey));
       console.log("Balance:", balance);
-      const solBalance = balance / 1e9; // Convert lamports to SOL
+      const solBalance = balance / 10e9; // Convert lamports to SOL
       setHasSufficientBalance(solBalance >= 0.05);
     } catch (err) {
       console.error("Balance check error:", err);
@@ -88,8 +88,8 @@ const SignupValidator = () => {
     }
 
     try {
-      const { name, email, password, location, publicKey } = formData;
-      const { payoutPublicKey, privateKey } = keyPair;
+      const { name, email, password, location, payoutPublicKey } = formData;
+      const { publicKey, privateKey } = keyPair;
       const ipResponse = await axios("https://ipinfo.io/json");
       const userIP = ipResponse.data.ip;
       console.log(`User I.P. : ${userIP}`);
@@ -103,11 +103,11 @@ const SignupValidator = () => {
         payoutPublicKey,
       });
       localStorage.setItem("privateKey", privateKey);
-      console.log(response);
+      console.log(response.data.message);
       setSuccess(true);
     } catch (err) {
       setError("An error occurred during signup. Please try again.");
-      console.error("Signup error:", err);
+      console.error("Signup error:", err.response.data.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -274,14 +274,14 @@ const SignupValidator = () => {
                     <div className="relative w-1/2">
                       <input
                         type="text"
-                        value={keyPair ? keyPair.payoutPublicKey : ""}
+                        value={keyPair ? keyPair.publicKey : ""}
                         readOnly
                         className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white"
                         placeholder="Public Key"
                       />
                       <div
                         onClick={() =>
-                          handleCopy(keyPair ? keyPair.payoutPublicKey : "")
+                          handleCopy(keyPair ? keyPair.publicKey : "")
                         }
                         className="absolute right-2 top-2 flex items-center text-purple-600 cursor-pointer"
                       >

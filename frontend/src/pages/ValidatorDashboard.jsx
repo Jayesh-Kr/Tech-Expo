@@ -11,14 +11,14 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import nacl from "tweetnacl";
-import naclUtil from "tweetnacl-util";
-
+import nacl_util from "tweetnacl-util";
+import axios from "axios";
+import bs58 from "bs58";
 const ValidatorDashboard = () => {
-
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
-  if(!token) {
+  if (!token) {
     navigate("/signin-validator");
   }
   const [isSignedIn, setIsSignedIn] = useState(true); // For demo purposes
@@ -30,144 +30,113 @@ const ValidatorDashboard = () => {
   const [location, setLocation] = useState("Delhi, India"); // Mock location
   const [averagePayout, setAveragePayout] = useState("0.01 ETH"); // Mock average payout
   const [isValidating, setIsValidating] = useState(false);
+  const [startTime, setStartTime] = useState(null);
+  const [uptimeInterval, setUptimeInterval] = useState(null);
+
+  const [mockRecentActivity, setMockRecentActivity] = useState([
+    {
+      id: 1,
+      type: "Validation",
+      status: "Good",
+      time: "5 minutes ago",
+      latency: 100,
+    },
+  ]);
+  const [mockStats, setMockStats] = useState({
+    totalValidator: 1248,
+    uptime: "2 hours",
+    rewards: "0.025 SOL",
+    status: "Offline",
+  });
 
   // Start Validating
   const validatorIdRef = useRef(null);
-
   useEffect(() => {
-    let ws = null;
-    const connectWebsocket = () => {
-      const privateKeyBase64 = localStorage.getItem("privateKey");
-      const privateKeyBytes = naclUtil.decodeBase64(privateKeyBase64);
-      const keypair = nacl.sign.keyPair.fromSecretKey(privateKeyBytes);
+    const fetchValidatorDetails = async () => {
+      const token = localStorage.getItem("token");
+      console.log(token);
+      const res = await axios.get("http://localhost:3000/validator-detail", {
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+      });
+      console.log(res);
+      const { name, location, payoutPublicKey, pendingPayouts, email } =
+        res.data.validator;
+      const totalValidator = res.data.totalValidator;
+      console.log(totalValidator);
+      const averagePayout = res.data.averagePayout;
+      let recentWeb = res.data.recentWebsites;
+      const transformedRecentWeb = recentWeb.map((activity) => {
+        // Calculate time difference
+        const now = new Date();
+        const activityTime = new Date(activity.createdAt);
+        const diffInMinutes = Math.floor((now - activityTime) / (1000 * 60));
 
-      ws = new WebSocket("ws://localhost:8081");
-
-      ws.onopen = async () => {
-        const callbackId = naclUtil.randomBytes(16).toString("hex");
-        const signedMessage = await signMessage(
-          `Signed message for ${callbackId}, ${naclUtil.encodeBase64(
-            keypair.publicKey
-          )}`,
-          keypair
-        );
-
-        ws.send(
-          JSON.stringify({
-            type: "signup",
-            data: {
-              callbackId,
-              ip: "127.0.0.1",
-              publicKey: naclUtil.encodeBase64(keypair.publicKey),
-              signedMessage,
-            },
-          })
-        );
-      };
-
-      ws.onmessage =async (event) => {
-        const data = JSON.parse(event);
-        if (data.type === "signup") {
-          validatorIdRef.current = data.data.validatorId;
-        } else if (data.type === "validate") {
-          const { url, callbackId } = data.data;
-          const startTime = Date.now();
-          let latency = 0;
-          const signature = await signMessage(
-            `Replying to ${callbackId}`,
-            keypair
-          );
-
-          try {
-            const response = await fetch(url);
-            const endTime = Date.now();
-            latency = endTime - startTime;
-            const status = response.status;
-
-            ws.send(
-              JSON.stringify({
-                type: "validate",
-                data: {
-                  callbackId,
-                  status: status === 200 ? "Good" : "Bad",
-                  latency,
-                  validatorId: validatorIdRef.current,
-                  signedMessage: signature,
-                },
-              })
-            );
-          } catch (error) {
-            try {
-            const coordinates = await getCurrentLocation();
-            ws.send(
-              JSON.stringify({
-                type: "validate",
-                data: {
-                  callbackId,
-                  status: "Bad",
-                  latency: latency,
-                  validatorId: validatorIdRef.current,
-                  signedMessage: signature,
-                  coordinates : coordinates,
-                  location : location
-                },
-              })
-            );
-          } catch(err) {
-            console.log("Error in getting the location");
-            console.log(err.message);
-          }
-            console.error(error);
-          }
+        let timeAgo;
+        if (diffInMinutes < 1) {
+          timeAgo = "just now";
+        } else if (diffInMinutes === 1) {
+          timeAgo = "1 minute ago";
+        } else if (diffInMinutes < 60) {
+          timeAgo = `${diffInMinutes} minutes ago`;
+        } else {
+          const hours = Math.floor(diffInMinutes / 60);
+          timeAgo = `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
         }
-      };
-      ws.onclose = () => {
-        // Attempt to reconnect after 5 seconds if still validating
-        if (isValidating) {
-          console.log("WebSocket disconnected. Reconnecting...");
-          setTimeout(connectWebsocket, 5000);
-        }
-      };
 
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        ws.close(); // This will trigger onclose and attempt reconnection
-      };
+        return {
+          id: activity._id,
+          type: "Validation",
+          status: activity.status === "Good" ? "Good" : "Bad",
+          time: timeAgo,
+          latency: activity.latency,
+        };
+      });
+
+      setMockRecentActivity(transformedRecentWeb);
+      setEmail(email);
+      setUserName(name);
+      setPublicKey(payoutPublicKey);
+      setLocation(location);
+      setMockStats((prev) => ({
+        ...prev,
+        rewards: pendingPayouts || "0",
+        totalValidator: totalValidator || 0,
+      }));
+      setAveragePayout(averagePayout);
     };
-
-    if (isValidating) {
-      connectWebsocket();
+    try {
+      fetchValidatorDetails();
+    } catch (err) {
+      console.log(err);
     }
-
+  }, []);
+  useEffect(() => {
     return () => {
-      if (ws) ws.close();
-    };
-  }, [isValidating]);
-
-  // Get current location
-  const getCurrentLocation = () => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation is not supported by your browser'));
-      } else {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            });
-          },
-          (error) => {
-            reject(error);
-          }
-        );
+      if (uptimeInterval) {
+        clearInterval(uptimeInterval);
       }
-    });
+    };
+  }, [uptimeInterval]);
+
+  const calculateUptime = (startTime) => {
+    const now = new Date();
+    const diff = Math.floor((now - startTime) / 1000); // difference in seconds
+
+    const hours = Math.floor(diff / 3600);
+    const minutes = Math.floor((diff % 3600) / 60);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
   };
 
   // Function for signing msg
   const signMessage = async (message, keypair) => {
-    const messageBytes = naclUtil.decodeUTF8(message);
+    const messageBytes = nacl_util.decodeUTF8(message);
     const signature = nacl.sign.detached(messageBytes, keypair.secretKey);
     return JSON.stringify(Array.from(signature));
   };
@@ -180,45 +149,6 @@ const ValidatorDashboard = () => {
 
     return () => clearTimeout(timer);
   }, []);
-
-  // Mock data for the dashboard
-  const mockStats = {
-    validations: 1248,
-    uptime: "2 hours",
-    rewards: "0.025 SOL",
-    status: "Active",
-  };
-
-  const mockRecentActivity = [
-    {
-      id: 1,
-      type: "Validation",
-      status: "Success",
-      time: "5 minutes ago",
-      website: "example.com",
-    },
-    {
-      id: 2,
-      type: "Reward",
-      status: "Received",
-      time: "2 hours ago",
-      amount: "0.003 ETH",
-    },
-    {
-      id: 3,
-      type: "Validation",
-      status: "Success",
-      time: "4 hours ago",
-      website: "test-api.io",
-    },
-    {
-      id: 4,
-      type: "System",
-      status: "Update",
-      time: "1 day ago",
-      details: "Node software updated",
-    },
-  ];
 
   const handleSignOut = () => {
     setIsSignedIn(false);
@@ -295,7 +225,7 @@ const ValidatorDashboard = () => {
               <div>
                 <p className="text-gray-400 text-sm">Total Validations</p>
                 <h3 className="text-2xl font-bold text-white">
-                  {mockStats.validations}
+                  {mockStats.totalValidator}
                 </h3>
               </div>
               <div className="p-2 bg-purple-500/20 rounded-lg">
@@ -323,7 +253,7 @@ const ValidatorDashboard = () => {
               <div>
                 <p className="text-gray-400 text-sm">Rewards Earned</p>
                 <h3 className="text-2xl font-bold text-white">
-                  {mockStats.rewards}
+                  {mockStats.rewards} Lamports
                 </h3>
               </div>
               <div className="p-2 bg-yellow-500/20 rounded-lg">
@@ -335,9 +265,9 @@ const ValidatorDashboard = () => {
           <div className="bg-black/30 backdrop-blur-md rounded-xl p-4 border border-white/10">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Status</p>
+                <p className="text-gray-400 text-sm">Averave Payout</p>
                 <h3 className="text-2xl font-bold text-green-400">
-                  {mockStats.status}
+                  {averagePayout} Lamports
                 </h3>
               </div>
               <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -373,52 +303,24 @@ const ValidatorDashboard = () => {
                         </span>
                         <span
                           className={`ml-2 text-xs px-2 py-1 rounded-full ${
-                            activity.status === "Success" ||
-                            activity.status === "Received"
+                            activity.status === "Good"
                               ? "bg-green-500/20 text-green-400"
-                              : "bg-blue-500/20 text-blue-400"
+                              : "bg-red-500 text-white"
                           }`}
                         >
                           {activity.status}
                         </span>
                       </div>
                       <div className="text-gray-400 text-sm mt-1">
-                        {activity.website && `Website: ${activity.website}`}
-                        {activity.amount && `Amount: ${activity.amount}`}
-                        {activity.details && activity.details}
+                        {activity.latency && `Latency: ${activity.latency}`}
                       </div>
                     </div>
                     <div className="text-gray-500 text-sm">{activity.time}</div>
                   </div>
                 ))}
               </div>
-
-              <div className="mt-4 text-center">
-                <button className="text-purple-400 hover:text-purple-300 text-sm">
-                  View All Activity
-                </button>
-              </div>
             </div>
-
-            <div className="relative mt-4 text-center">
-  <button
-    className={`${
-      isValidating ? 'bg-purple-600' : 'bg-purple-500 hover:bg-purple-600'
-    } text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 zIndex=10`}
-    onClick={() => {
-      setIsValidating(!isValidating);
-      if (!isValidating) {
-        validatorIdRef.current = null; // Reset validatorId when stopping validation
-      }
-      console.log("Button clicked validating....");
-    }}
-    disabled={isValidating && !validatorIdRef.current}
-  >
-    {isValidating ? (validatorIdRef.current ? 'Validating' : 'Connecting...') : 'Start Validating'}
-  </button>
-</div>
           </motion.div>
-
 
           {/* Sidebar */}
           <motion.div
@@ -528,14 +430,6 @@ const ValidatorDashboard = () => {
               <div className="mt-8 pt-4 border-t border-white/10">
                 <div className="bg-white/5 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <div className="font-medium text-white">
-                        Average Payout
-                      </div>
-                      <div className="text-sm text-gray-400">
-                        {averagePayout}
-                      </div>
-                    </div>
                     <button
                       onClick={handleWithdraw}
                       className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors"

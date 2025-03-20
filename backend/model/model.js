@@ -36,7 +36,6 @@ const downLogSchema = new mongoose.Schema({
   websiteId : {type : String, required: true, ref: "Website"},
   createdAt: { type: Date, required: true, default: Date.now },
   location : {type : String, required: true},
-  coordinates : {type : String, required : true}
 })
 
 const User = mongoose.model("User", userSchema);
