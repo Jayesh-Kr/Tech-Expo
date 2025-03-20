@@ -33,9 +33,7 @@ app.post("/user", async (req, res) => {
     const user = await User.create({
       email: req.body.email,
     });
-    console.log(user._id);
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET);
-    res.status(201).json({ user, token });
+    res.status(201).json(user);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -43,11 +41,11 @@ app.post("/user", async (req, res) => {
 
 // Website Creation
 // authenticatUser middleware -> add
-app.post("/website", async (req, res) => {
+app.post("/website",authenticateUser, async (req, res) => {
   try {
     const website = await Website.create({
       url: req.body.url,
-      userId: req.body._id,
+      userId: req.auth.userId,
       websiteName : req.body.websiteName
     });
     res.status(201).json(website);
@@ -59,9 +57,12 @@ app.post("/website", async (req, res) => {
 // Fetch Website Details
 app.get("/website/:id", authenticateUser, async (req, res) => {
   try {
+    const userId = req.auth.userId; // Get the user ID from Clerk
+
     const website = await Website.findOne({
       _id: req.params.id,
-      userId: req.user._id,
+      userId: userId, // Use the user ID from Clerk
+      
     });
 
     if (!website) {
@@ -239,27 +240,6 @@ app.post("/website-tick", async (req, res) => {
   }
 });
 
-// Update Website Tick
-app.put("/website-tick/:id", async (req, res) => {
-  try {
-    const websiteTick = await WebsiteTick.findByIdAndUpdate(
-      req.params.id,
-      {
-        status: req.body.status,
-        latency: req.body.latency,
-      },
-      { new: true }
-    );
-
-    if (!websiteTick) {
-      return res.status(404).json({ message: "Website tick not found" });
-    }
-
-    res.json(websiteTick);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
 
 // Update Website Tracking
 app.put("/webiste-track/:id",authenticateUser,async(req,res)=>{
@@ -328,9 +308,10 @@ app.get("/getWebsiteTick", authenticateUser, async (req, res) => {
 // Delete Website
 app.delete("/website/:id", authenticateUser, async (req, res) => {
   try {
+    const userId = req.auth.userId; // Get the user ID from Clerk
     const website = await Website.findOneAndDelete({
       _id: req.params.id,
-      userId: req.user._id,
+      userId: userId,
     });
 
     if (!website) {
