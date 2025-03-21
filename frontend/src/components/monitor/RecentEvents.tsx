@@ -37,15 +37,27 @@ const RecentEvents: React.FC<RecentEventsProps> = ({ events }) => {
     }
   };
   
-  const formatTime = (date: string) => {
-    // Parse the date string into a Date object
-    const parsedDate = new Date(date);
-    
-    // Check if the parsed date is valid
-    if (isNaN(parsedDate.getTime())) {
-      return "Invalid date";
+  const formatTime = (dateString: string | undefined | null) => {
+    // If the dateString is undefined or null, return "N/A"
+    if (!dateString) {
+      return "N/A";
     }
 
+    // Try to parse the date string
+    const parsedDate = new Date(dateString);
+    
+    // If the date is invalid, manually extract date and time from the string
+    if (isNaN(parsedDate.getTime())) {
+      // Extract date and time from the string (format: 2025-03-19T21:07:15.308Z)
+      const [datePart, timePart] = dateString.split('T');
+      if (!datePart || !timePart) {
+        return "Invalid date";
+      }
+      const time = timePart.split('.')[0]; // Remove milliseconds
+      return `${datePart} ${time}`; // Return as "2025-03-19 21:07:15"
+    }
+
+    // If the date is valid, calculate the time difference
     const now = new Date();
     const diffMs = now.getTime() - parsedDate.getTime();
     const diffMins = Math.floor(diffMs / 60000);

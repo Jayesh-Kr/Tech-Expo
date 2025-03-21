@@ -20,22 +20,28 @@ const MonitorDetails = () => {
   const [loading, setLoading] = useState(true);
   const { getToken } = useAuth();
 
+  const fetchMonitorData = async () => {
+    const token = await getToken();
+    const response = await fetch(`http://localhost:3000/website-details:${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+    });
+    const data = await response.json();
+    setMonitor(data);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const getWebsiteDetails = async () => {
-      const token = await getToken();
-      const response = await fetch(`http://localhost:3000/website-details:${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-      });
-      const data = await response.json();
-      console.log(data);
-      setMonitor(data);
-      setLoading(false);
-    };
-    getWebsiteDetails();
+    fetchMonitorData(); // Initial fetch
+
+    const interval = setInterval(() => {
+      fetchMonitorData(); // Fetch every minute
+    }, 60000);
+
+    return () => clearInterval(interval); // Cleanup interval on component unmount
   }, [id, getToken]);
 
   if (loading) {
