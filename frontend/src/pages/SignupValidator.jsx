@@ -39,7 +39,7 @@ const SignupValidator = () => {
       [name]: value,
     }));
   };
-
+  
   const handleGenerateKeyPair = () => {
     const keyPair = nacl.sign.keyPair();
     const publicKey = nacl_util.encodeBase64(keyPair.publicKey);
@@ -77,7 +77,7 @@ const SignupValidator = () => {
       !formData.email ||
       !formData.password ||
       !formData.name ||
-      !formData.publicKey
+      !formData.payoutPublicKey
     ) {
       setError("All fields are required");
       setIsSubmitting(false);
