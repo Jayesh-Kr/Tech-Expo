@@ -38,6 +38,7 @@ app.post("/user", async (req, res) => {
   try {
     const user = await User.create({
       email: req.body.email,
+      userId : req.body.userId
     });
     res.status(201).json(user);
   } catch (error) {
