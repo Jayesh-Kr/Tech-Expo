@@ -67,6 +67,16 @@ const SignupValidator = () => {
     alert("Copied to clipboard");
   };
 
+  const downloadPrivateKey = (privateKey) => {
+    const element = document.createElement('a');
+    const file = new Blob([privateKey], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = 'validator-private-key.txt';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -108,6 +118,7 @@ const SignupValidator = () => {
         payoutPublicKey,
       });
       localStorage.setItem("privateKey", privateKey);
+      downloadPrivateKey(privateKey);
       console.log(response.data.message);
       setSuccess(true);
     } catch (err) {
