@@ -367,12 +367,6 @@ const Features = () => {
           </div>
         </motion.div>
         <div className="text-center mt-12">
-          <button 
-            onClick={handleStartMonitoringClick}
-            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            Start Monitoring
-          </button>
         </div>
       </div>
     </div>

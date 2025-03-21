@@ -106,7 +106,7 @@ function getTcpConnectionTime(hostname, port) {
 }
 
 /**
- * Perform a simple, fast HTTP HEAD request
+ * Perform a simple, fast HTTP HEAD request with accurate timing
  * @param {string} url The URL to request
  * @param {number} timeout Timeout in ms
  * @returns {Promise<{time: number, status: number}>} Time and status
@@ -122,19 +122,23 @@ async function performHeadRequest(url, timeout = 2000) {
         method: 'HEAD',
         hostname: hostname,
         path: pathname + (search || ''),
-        timeout: timeout
+        timeout: timeout,
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Connection': 'close' // Ensure connection is closed after request
+        }
       };
       
-      const req = (protocol === 'https:' ? https : http).request(options, (res) => {
-        res.on('end', () => {
-          resolve({
-            time: Date.now() - startTime,
-            status: res.statusCode
-          });
+      const req = (protocol === 'https:' ? require('https') : require('http')).request(options, (res) => {
+        // Resolve as soon as we get headers, don't wait for body
+        resolve({
+          time: Date.now() - startTime,
+          status: res.statusCode
         });
         
-        // Consume a small amount of the response
+        // Consume a small amount of the response then end
         res.on('data', () => {});
+        res.resume();
       });
       
       req.on('error', (e) => {
@@ -146,6 +150,7 @@ async function performHeadRequest(url, timeout = 2000) {
         reject(new Error('Request timed out'));
       });
       
+      // End immediately since we don't need to send body data
       req.end();
     });
   } catch (error) {
@@ -167,7 +172,8 @@ async function measureLatency(url, options = {}) {
   const defaults = {
     timeout: 3000,
     preferNetworkPing: true,
-    measureDns: true
+    measureDns: true,
+    useHeadRequest: true
   };
   
   const config = { ...defaults, ...options };
@@ -179,6 +185,7 @@ async function measureLatency(url, options = {}) {
     const results = {
       url,
       networkPing: null,
+      httpLatency: null,
       dnsTime: null,
       status: null
     };
@@ -186,24 +193,54 @@ async function measureLatency(url, options = {}) {
     // For speed, run DNS and ping in parallel
     const [networkPing, dnsTime] = await Promise.all([
       getNetworkLatency(hostname),
-      config.measureDns ? getDnsResolutionTime(hostname) : Promise.resolve(null),
+      config.measureDns ? getDnsResolutionTime(hostname) : Promise.resolve(null)
     ]);
     
     results.networkPing = networkPing;
     results.dnsTime = dnsTime;
     
-    // Just check if the site is up without measuring latency
-    try {
-      // Simple HEAD request just to get status
-      const response = await axios.head(url, {
-        timeout: config.timeout,
-        headers: { 'Cache-Control': 'no-cache' },
-        validateStatus: () => true
-      });
-      results.status = response.status;
-    } catch (error) {
-      results.status = 0;
+    // Perform a HEAD request for fastest response
+    if (config.useHeadRequest) {
+      try {
+        const headResponse = await performHeadRequest(url, config.timeout);
+        results.httpLatency = headResponse.time;
+        results.status = headResponse.status;
+      } catch (headError) {
+        // Fall back to a simple axios check if HEAD fails
+        try {
+          const startTime = Date.now();
+          const response = await axios.get(url, {
+            timeout: config.timeout,
+            headers: { 'Cache-Control': 'no-cache' },
+            validateStatus: () => true
+          });
+          results.httpLatency = Date.now() - startTime;
+          results.status = response.status;
+        } catch (getError) {
+          results.status = 0;
+        }
+      }
+    } else {
+      // If not using HEAD, fall back to regular GET
+      try {
+        const startTime = Date.now();
+        const response = await axios.get(url, {
+          timeout: config.timeout,
+          headers: { 'Cache-Control': 'no-cache' },
+          validateStatus: () => true
+        });
+        results.httpLatency = Date.now() - startTime;
+        results.status = response.status;
+      } catch (error) {
+        results.status = 0;
+      }
     }
+    
+    // Choose the best latency measure in this order:
+    // 1. Network ping (if available and preferred)
+    // 2. HTTP latency (if available)
+    results.bestLatency = (config.preferNetworkPing && results.networkPing) ? 
+      results.networkPing : results.httpLatency;
     
     return results;
   } catch (error) {
@@ -211,6 +248,7 @@ async function measureLatency(url, options = {}) {
       url,
       error: error.message,
       networkPing: null,
+      httpLatency: null,
       status: 0
     };
   }

@@ -7,11 +7,12 @@
     "validator-cli": "bin/index.js"
   },
   "scripts": {
-    "start": "node src/server.js",
-    "test": "node test/test-cli.js"
+    "test": "node test/test-cli.js",
+    "help": "validator-cli -help"
   },
   "dependencies": {
     "axios": "^1.8.4",
+    "bs58": "^5.0.0",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.3",
     "commander": "^10.0.1",

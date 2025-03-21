@@ -9,7 +9,7 @@ const figlet = require("figlet");
 const Table = require('cli-table3');
 const chalk = require('chalk');
 const dns = require('dns');
-const { startValidator, getValidatorStatus } = require("./validator");
+const { startValidator, getValidatorStatus, loadPrivateKeyFromFile } = require("./validator");
 const logger = require("../utils/logger");
 const packageJson = require('../package.json');
 const { execSync } = require('child_process');
@@ -40,12 +40,14 @@ program
   .version(packageJson.version)
   .addHelpText('after', `
 Examples:
-  $ validator-cli generate-keys         Generate new validator keys
-  $ validator-cli start                 Start the validator node
-  $ validator-cli info                  Show validator information
+  $ validator-cli start keyfile.txt     Start the validator node with the specified private key
+  $ validator-cli info keyfile.txt      Show validator information
   $ validator-cli ping example.com      Manually ping a website
-  $ validator-cli dashboard             Show validator dashboard
   `);
+
+// Explicitly add help option (Commander already provides -h and --help, but we'll make it more visible)
+program
+  .option('-help', 'Display help information', false);
 
 program
   .command("generate-keys")
@@ -94,14 +96,12 @@ program
 program
   .command("start")
   .description("Start the validator node")
-  .option("-k, --key <path>", "Path to private key file", "./config/privateKey.txt")
+  .argument('<keypath>', 'Path to your private key file')
   .option("-c, --config <path>", "Path to config file", "./config/config.json")
-  .option("-u, --url <url>", "URL to ping (overrides config file)")
-  .option("-d, --daemon", "Run in background mode", false)
-  .action(async (options) => {
+  .action(async (keypath, options) => {
     displayBanner();
     
-    const keyPath = path.resolve(options.key);
+    const keyPath = path.resolve(keypath);
     const configPath = path.resolve(options.config);
 
     if (!fs.existsSync(keyPath)) {
@@ -110,9 +110,22 @@ program
       process.exit(1);
     }
 
+    // Create config file if it doesn't exist
     if (!fs.existsSync(configPath)) {
-      logger.error(`Config file not found at: ${configPath}`);
-      process.exit(1);
+      const defaultConfig = {
+        hubServer: "ws://localhost:8081",
+      };
+      
+      try {
+        const configDir = path.dirname(configPath);
+        if (!fs.existsSync(configDir)) {
+          fs.mkdirSync(configDir, { recursive: true });
+        }
+        fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));
+        logger.success(`Created default config at: ${configPath}`);
+      } catch (error) {
+        logger.error(`Failed to create default config: ${error.message}`);
+      }
     }
 
     logger.log("Starting validator node...");
@@ -123,18 +136,11 @@ program
     const spinner = ora({text: 'Connecting to hub server...', color: 'cyan'}).start();
     
     try {
-      // Set the key path in environment for the validator to use
-      process.env.PRIVATE_KEY_PATH = keyPath;
+      // Set the config path in environment
       process.env.CONFIG_PATH = configPath;
       
-      // Set custom URL if provided
-      if (options.url) {
-        process.env.TARGET_URL = options.url;
-        logger.log(`Using custom URL: ${options.url}`);
-      }
-      
       // Start the validator with the spinner for feedback
-      await startValidator(spinner);
+      await startValidator(keyPath, spinner);
     } catch (error) {
       spinner.fail(`Failed to start validator: ${error.message}`);
       process.exit(1);
@@ -144,16 +150,8 @@ program
 program
   .command("ping <url>")
   .description("Manually ping a specific URL")
-  .option("-k, --key <path>", "Path to private key file", "./config/privateKey.txt")
-  .action(async (url, options) => {
-    const keyPath = path.resolve(options.key);
-
-    if (!fs.existsSync(keyPath)) {
-      logger.error(`Private key file not found at: ${keyPath}`);
-      logger.log("Generate a keypair first using: validator-cli generate-keys");
-      process.exit(1);
-    }
-
+  .action(async (url) => {
+    displayBanner();
     logger.ping(`Pinging URL: ${url}...`);
     
     try {
@@ -210,18 +208,18 @@ program
 program
   .command("info")
   .description("Show validator information")
-  .option("-k, --key <path>", "Path to private key file", "./config/privateKey.txt")
-  .action((options) => {
-    const keyPath = path.resolve(options.key);
+  .argument('[keypath]', 'Path to your private key file', './config/privateKey.txt')
+  .action((keypath) => {
+    displayBanner();
+    const keyPath = path.resolve(keypath);
+    
     if (!fs.existsSync(keyPath)) {
       logger.error(`Private key file not found at: ${keyPath}`);
       return;
     }
     
     try {
-      const privateKeyBase64 = fs.readFileSync(keyPath, "utf-8").trim();
-      const privateKeyBytes = naclUtil.decodeBase64(privateKeyBase64);
-      const keypair = nacl.sign.keyPair.fromSecretKey(privateKeyBytes);
+      const keypair = loadPrivateKeyFromFile(keyPath);
       const publicKeyBase64 = naclUtil.encodeBase64(keypair.publicKey);
       
       // Let's retrieve the IP separately
@@ -230,10 +228,35 @@ program
           const ip = response.data.ip || "Unknown";
           const location = `${response.data.city}, ${response.data.region}, ${response.data.country}`;
           
-          logger.log("Validator information:");
-          logger.log(`Public key: ${publicKeyBase64}`);
-          logger.log(`IP address: ${ip}`);
-          logger.log(`Location: ${location}`);
+          const status = getValidatorStatus();
+          
+          logger.title("Validator Information");
+          
+          const table = new Table({
+            head: [chalk.cyanBright('Property'), chalk.cyanBright('Value')],
+            colWidths: [20, 60],
+            style: { head: [], border: [] }
+          });
+          
+          table.push(
+            ['Public Key', publicKeyBase64],
+            ['IP Address', ip],
+            ['Location', location]
+          );
+          
+          if (status.validatorId) {
+            table.push(
+              ['Validator ID', status.validatorId],
+              ['Connected', status.connected ? chalk.green('Yes') : chalk.red('No')],
+              ['Pending Rewards', `${status.pendingPayouts} lamports`]
+            );
+          }
+          
+          console.log(table.toString());
+          
+          if (!status.connected) {
+            logger.log(`To start the validator: validator-cli start ${keyPath}`);
+          }
         })
         .catch(error => {
           logger.log("Validator information:");
@@ -246,70 +269,41 @@ program
   });
 
 program
-  .command("set-target <url>")
-  .description("Set the target URL in the config file")
-  .option("-c, --config <path>", "Path to config file", "./config/config.json")
-  .action((url, options) => {
-    const configPath = path.resolve(options.config);
-    
-    try {
-      let config = {};
-      if (fs.existsSync(configPath)) {
-        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      } else {
-        config = {
-          hubServer: "ws://localhost:8081",
-          pingInterval: 10000
-        };
-      }
-      
-      config.targetURL = url;
-      
-      // Ensure directory exists
-      const configDir = path.dirname(configPath);
-      if (!fs.existsSync(configDir)) {
-        fs.mkdirSync(configDir, { recursive: true });
-      }
-      
-      fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-      logger.success(`Target URL set to: ${url}`);
-      logger.log(`Updated config saved to: ${configPath}`);
-    } catch (error) {
-      logger.error(`Failed to set target URL: ${error.message}`);
-    }
-  });
-
-program
-  .command("dashboard")
-  .description("Display a real-time dashboard of validator activity")
-  .option("-r, --refresh <seconds>", "Refresh interval in seconds", 5)
-  .action((options) => {
+  .command("rewards")
+  .description("Show your validator rewards")
+  .action(() => {
     displayBanner();
-    logger.log("Starting validator dashboard...");
-    logger.log("Press Ctrl+C to exit");
     
-    // Clear the console
-    console.clear();
+    const status = getValidatorStatus();
     
-    // Display dashboard header
-    console.log("🔍 VALIDATOR DASHBOARD 🔍");
-    console.log("------------------------");
+    if (!status.validatorId) {
+      logger.warn("Validator is not connected to the hub. Start the validator first.");
+      logger.log("Use: validator-cli start <keypath>");
+      return;
+    }
     
-    // This would be implemented to show real-time stats
-    const refreshInterval = parseInt(options.refresh) * 1000;
-    const intervalId = setInterval(() => {
-      // This would be replaced with actual status fetching
-      const now = new Date().toISOString();
-      console.log(`Last update: ${now}`);
-      // More dashboard implementation would go here
-    }, refreshInterval);
+    logger.title("Validator Rewards");
     
-    // Handle exit
-    process.on('SIGINT', () => {
-      clearInterval(intervalId);
-      console.log("\nDashboard stopped");
-      process.exit(0);
+    const table = new Table({
+      head: [chalk.cyanBright('Property'), chalk.cyanBright('Value')],
+      colWidths: [20, 60],
+      style: { head: [], border: [] }
     });
+    
+    table.push(
+      ['Validator ID', status.validatorId],
+      ['Pending Rewards', `${status.pendingPayouts} lamports`],
+      ['Estimated USD', `$${(status.pendingPayouts * 0.000001).toFixed(6)}`]
+    );
+    
+    console.log(table.toString());
+    
+    if (status.connected) {
+      logger.success("Your validator is online and earning rewards!");
+    } else {
+      logger.warn("Your validator is currently offline.");
+      logger.log("Start it again to continue earning rewards.");
+    }
   });
 
 program
@@ -318,33 +312,27 @@ program
   .action(() => {
     displayBanner();
     
-    try {
-      // This would check if the validator is running
-      const configPath = path.resolve("./config/config.json");
-      if (!fs.existsSync(configPath)) {
-        logger.error("Config file not found. The validator may not be configured yet.");
-        return;
-      }
-      
-      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      
-      const table = new Table({
-        head: ['Property', 'Value'],
-        colWidths: [20, 50]
-      });
-      
-      table.push(
-        ['Target URL', config.targetURL || 'Not set'],
-        ['Hub Server', config.hubServer],
-        ['Ping Interval', `${config.pingInterval/1000} seconds`]
-      );
-      
-      console.log(table.toString());
-      
-      // More status checking logic would be implemented here
-      logger.log("Use 'validator-cli start' to start the validator if it's not running");
-    } catch (error) {
-      logger.error(`Failed to get status: ${error.message}`);
+    const status = getValidatorStatus();
+    
+    const table = new Table({
+      head: [chalk.cyanBright('Property'), chalk.cyanBright('Value')],
+      colWidths: [20, 60],
+      style: { head: [], border: [] }
+    });
+    
+    table.push(
+      ['Connected', status.connected ? chalk.green('Yes') : chalk.red('No')],
+      ['Validator ID', status.validatorId || 'Not registered'],
+      ['Location', status.location],
+      ['IP Address', status.ipAddress],
+      ['Pending Rewards', status.pendingPayouts ? `${status.pendingPayouts} lamports` : 'Not available']
+    );
+    
+    console.log(table.toString());
+    
+    if (!status.connected) {
+      logger.log("Validator is not connected to the hub.");
+      logger.log("Start it with: validator-cli start <keypath>");
     }
   });
 
@@ -474,8 +462,8 @@ program
 
 program.parse(process.argv);
 
-// Show help if no command provided
-if (!process.argv.slice(2).length) {
+// Show help if no command provided or if -help flag is used
+if (!process.argv.slice(2).length || program.opts().help) {
   displayBanner();
   program.outputHelp();
 }
