@@ -12,11 +12,11 @@ import {
 } from 'lucide-react';
 
 interface Event {
-  id: number;
+  id: string; // Use _id from the backend response
   type: 'up' | 'down' | 'warning' | 'info';
-  timestamp: Date;
+  timestamp: string; // Use createdAt from the backend response
   duration: string | null;
-  message: string;
+  message: string; // Use location or other fields for the message
 }
 
 interface RecentEventsProps {
@@ -37,9 +37,17 @@ const RecentEvents: React.FC<RecentEventsProps> = ({ events }) => {
     }
   };
   
-  const formatTime = (date: Date) => {
+  const formatTime = (date: string) => {
+    // Parse the date string into a Date object
+    const parsedDate = new Date(date);
+    
+    // Check if the parsed date is valid
+    if (isNaN(parsedDate.getTime())) {
+      return "Invalid date";
+    }
+
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+    const diffMs = now.getTime() - parsedDate.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);

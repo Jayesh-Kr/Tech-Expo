@@ -20,7 +20,6 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
   previousResponseTime, 
   uptime 
 }) => {
-  // Calculate performance trend
   const trend = previousResponseTime 
     ? responseTime < previousResponseTime 
       ? { direction: "down", label: "Improved", color: "text-green-400" }
@@ -29,7 +28,6 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
         : { direction: "same", label: "Stable", color: "text-blue-400" }
     : { direction: "same", label: "Stable", color: "text-blue-400" };
 
-  // Calculate performance rating
   const getPerformanceRating = () => {
     if (responseTime < 100) return { label: "Excellent", color: "text-green-400" };
     if (responseTime < 300) return { label: "Good", color: "text-blue-400" };
@@ -39,7 +37,6 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
 
   const rating = getPerformanceRating();
   
-  // Calculate percentage for the gauge
   const percentage = Math.min(100, (responseTime / 1000) * 100);
   
   return (
@@ -59,7 +56,6 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
       
       <CardContent className="pt-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Response Time */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -117,7 +113,6 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
             </div>
           </div>
           
-          {/* Uptime */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -143,7 +138,6 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
             <div className="pt-3">
               <div className="relative pt-1">
                 <div className="h-32 w-32 mx-auto relative">
-                  {/* Circular background */}
                   <svg className="w-32 h-32" viewBox="0 0 36 36">
                     <path 
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -153,7 +147,6 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
                       strokeLinecap="round"
                     />
                     
-                    {/* Arc representing uptime */}
                     <path 
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
@@ -164,10 +157,8 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
                     />
                   </svg>
                   
-                  {/* Center text */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-2xl font-bold text-white">{uptime.toFixed(2)}%</span>
-                    <span className="text-xs text-gray-400">Last 30 days</span>
                   </div>
                 </div>
               </div>
