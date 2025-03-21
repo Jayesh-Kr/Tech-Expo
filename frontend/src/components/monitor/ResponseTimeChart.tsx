@@ -45,23 +45,25 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({
         timestamp: new Date(now.getTime() - (initialData.length - 1 - index) * 60000)
       }));
       setData(enhancedData);
-    } else {
-      const now = new Date();
-      let prevValue = 200;
+    } 
+    else {
+      // const now = new Date();
+      // let prevValue = 200;
       
-      const initialPoints = Array(10).fill(null).map((_, i) => {
-        const pointTime = new Date(now.getTime() - (9 - i) * 60000);
-        prevValue = generateRealisticResponseTime(prevValue);
-        return {
-          name: formatTimeString(pointTime),
-          responseTime: prevValue,
-          timestamp: pointTime
-        };
-      });
+      // const initialPoints = Array(10).fill(null).map((_, i) => {
+      //   const pointTime = new Date(now.getTime() - (9 - i) * 60000);
+      //   prevValue = generateRealisticResponseTime(prevValue);
+      //   return {
+      //     name: formatTimeString(pointTime),
+      //     responseTime: prevValue,
+      //     timestamp: pointTime
+      //   };
+      // });
       
-      setData(initialPoints);
+      // setData(initialPoints);
+      setData([]);
     }
-    setLastUpdated(new Date());
+    // setLastUpdated(new Date());
   }, [initialData, generateRealisticResponseTime]);
   
   useEffect(() => {

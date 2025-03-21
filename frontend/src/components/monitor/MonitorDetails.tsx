@@ -22,7 +22,7 @@ const MonitorDetails = () => {
 
   const fetchMonitorData = async () => {
     const token = await getToken();
-    const response = await fetch(`http://localhost:3000/website-details:${id}`, {
+    const response = await fetch(`http://localhost:3000/website-details${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -30,6 +30,7 @@ const MonitorDetails = () => {
       },
     });
     const data = await response.json();
+    console.log(data);
     setMonitor(data);
     setLoading(false);
   };
@@ -95,7 +96,7 @@ const MonitorDetails = () => {
           url={monitor.url}
           status={monitor.disabled ? "down" : "up"}
           uptimePercentage={monitor.uptimePercentage}
-          lastChecked={monitor.averageLatencyPerMinute[monitor.averageLatencyPerMinute.length - 1]?.timestamp || "N/A"}
+          lastChecked={monitor.averageLatencyPerMinute[monitor?.averageLatencyPerMinute?.length - 1]?.timestamp || "N/A"}
           disabled={monitor.disabled}
         />
       </div>
