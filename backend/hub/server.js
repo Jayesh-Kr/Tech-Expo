@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import nacl from 'tweetnacl';
 import nacl_util from "tweetnacl-util";
 import base58 from 'bs58';
-import { Website, Validator, WebsiteTick, DownLog } from '../model/model.js';
+import { Website, Validator, WebsiteTick, DownLog, User } from '../model/model.js';
 import db from '../db/db.js';
 const CALLBACKS = {};
 const availableValidators = [];
@@ -15,7 +15,7 @@ const wss = new WebSocketServer({ port: 8081 });
 console.log("Websocket server")
 
 wss.on('connection', async (ws) => {
-    console.log(ws._eventsCount);
+    // console.log(ws._eventsCount);
     ws.on('message', async (message) => {
         try {
             // console.log(JSON.parse(message.toString()));
@@ -27,12 +27,14 @@ wss.on('connection', async (ws) => {
                 data.data.publicKey,
                 data.data.signedMessage
             );
+            console.log("Verification started");
             if (verified) {
                 await signupHandler(ws, data.data);
             }
+            console.log("Verification completed");
         } else if (data.type === 'validate') {
-            console.log(`Console in line number 34 : ${data}`);
-            console.log(data);
+            // console.log(`Console in line number 34 : ${data}`);
+            // console.log(data);
             CALLBACKS[data.data.callbackId](data);
             delete CALLBACKS[data.data.callbackId];
         }
@@ -49,8 +51,10 @@ wss.on('connection', async (ws) => {
 });
 
 async function signupHandler(ws, { ip, publicKey, signedMessage, callbackId }) {
+    // console.log(publicKey);
     const validatorDb = await Validator.findOne({ publicKey });
-    console.log("Came to signUpHandler")
+    // console.log(validatorDb);
+    // console.log("Came to signUpHandler")
     if (validatorDb) {
         ws.send(JSON.stringify({
             type: 'signup',
@@ -65,7 +69,7 @@ async function signupHandler(ws, { ip, publicKey, signedMessage, callbackId }) {
             socket: ws,
             publicKey: validatorDb.publicKey,
         });
-        console.log(`Validator - ${validatorDb._id} successfully added in the array`);
+        // console.log(`Validator - ${validatorDb._id} successfully added in the array`);
         return;
     }
 
@@ -93,16 +97,17 @@ async function signupHandler(ws, { ip, publicKey, signedMessage, callbackId }) {
 }
 
 async function verifyMessage(message, publicKey, signature) {
-    // console.log(message);
     const messageBytes = nacl_util.decodeUTF8(message);
-    // console.log(messageBytes);
-    // console.log(publicKey);
-    const result =  nacl.sign.detached.verify(
+    const publicKeyBytes = nacl_util.decodeBase64(publicKey); // Decode Base64 public key
+    const signatureBytes = new Uint8Array(JSON.parse(signature));
+
+    const result = nacl.sign.detached.verify(
         messageBytes,
-        new Uint8Array(JSON.parse(signature)),
-        base58.decode(publicKey),
+        signatureBytes,
+        publicKeyBytes
     );
-    console.log(`Result : ${result}`);
+
+    // console.log(`Result : ${result}`);
     return result;
 }
 
@@ -112,22 +117,23 @@ setInterval(async () => {
 
     for (const website of websitesToMonitor) {
         availableValidators.forEach(validator => {
-            const callbackId2 = randomUUID();
+            const callbackId = randomUUID();
             console.log(`Sending validate to ${validator.validatorId} ${website.url}`);
             validator.socket.send(JSON.stringify({
                 type: 'validate',
                 data: {
                     url: website.url,
-                    callbackId2
+                    callbackId
                 },
             }));
 
-            CALLBACKS[callbackId2] = async (data) => {
+            CALLBACKS[callbackId] = async (data) => {
                 if (data.type === 'validate') {
                     const { validatorId, status, latency, signedMessage,location } = data.data;
-                    console.log(location);
+                    console.log(`Status : ${status}`);
+                    console.log(`Location :  ${location}`);
                     const verified = await verifyMessage(
-                        `Replying to ${callbackId2}`,
+                        `Replying to ${callbackId}`,
                         validator.publicKey,
                         signedMessage
                     );
@@ -135,6 +141,8 @@ setInterval(async () => {
                         return;
                     }
                     if(status == "Bad") {
+                        const userId = await Website.findById(website._id).select("userId");
+                        const mail = await User.findOne({userId}).select("email");
                         // Send Email to the user with coordinates and location
                     await DownLog.create({
                         websiteId : website._id,
@@ -158,4 +166,4 @@ setInterval(async () => {
             };
         });
     }
-}, 15 * 1000);
+}, 10 * 1000);

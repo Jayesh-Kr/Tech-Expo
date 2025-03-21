@@ -2,21 +2,22 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Network, ChevronLeft, Check, Copy, KeyRound } from "lucide-react";
-import naclUtil from "tweetnacl-util";
+import nacl_util from "tweetnacl-util";
 import { Connection, PublicKey, Keypair } from "@solana/web3.js";
 import axios from "axios";
+import nacl from "tweetnacl";
 const SignupValidator = () => {
   const navigate = useNavigate();
-  useEffect(()=>{
+  useEffect(() => {
     const fetchLocation = async () => {
       const ipResponse = await axios("https://ipinfo.io/json");
-      setFormData(prev => ({
-      ...prev,
-      location: ipResponse.data.city
+      setFormData((prev) => ({
+        ...prev,
+        location: ipResponse.data.city,
       }));
     };
     fetchLocation();
-  },[])
+  }, []);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -40,15 +41,15 @@ const SignupValidator = () => {
   };
 
   const handleGenerateKeyPair = () => {
-    const keyPair = Keypair.generate();
-    const publicKey = keyPair.publicKey.toString();
-    const privateKey = naclUtil.encodeBase64(keyPair.secretKey);
+    const keyPair = nacl.sign.keyPair();
+    const publicKey = nacl_util.encodeBase64(keyPair.publicKey);
+    const privateKey = nacl_util.encodeBase64(keyPair.secretKey);
     setKeyPair({ publicKey: publicKey, privateKey });
   };
 
   const checkBalance = async (publicKey) => {
     console.log("Checking balance called");
-    console.log(`Payout Public Key : ${publicKey}`)
+    console.log(`Payout Public Key : ${publicKey}`);
     const alchemyUrl = import.meta.env.VITE_ALCHEMY_URL;
     try {
       const connection = new Connection(alchemyUrl);
