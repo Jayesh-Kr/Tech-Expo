@@ -8,6 +8,8 @@ interface MonitorHeaderProps {
   url: string;
   status: "up" | "down" | "warning";
   uptimePercentage: number;
+  lastChecked: string;
+  disabled: boolean;
   onRefresh?: () => void;
   isRefreshing?: boolean;
 }
@@ -17,12 +19,13 @@ const MonitorHeader: React.FC<MonitorHeaderProps> = ({
   url,
   status,
   uptimePercentage,
+  lastChecked,
+  disabled,
   onRefresh,
   isRefreshing = false
 }) => {
   return (
     <div className="relative overflow-hidden bg-gradient-to-r from-gray-800/70 to-gray-900/70 rounded-xl border border-gray-700 shadow-lg backdrop-blur-sm animate-slide-up">
-      {/* Background visual elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className={`absolute -right-10 -top-10 w-40 h-40 rounded-full blur-3xl opacity-30 ${
           status === "up" ? "bg-green-500" : 
@@ -82,13 +85,13 @@ const MonitorHeader: React.FC<MonitorHeaderProps> = ({
               <div className="flex items-center text-sm">
                 <Clock className="h-3.5 w-3.5 text-blue-400 mr-1.5" />
                 <span className="text-gray-400">Last checked: </span>
-                <span className="text-white ml-1">2 min ago</span>
+                <span className="text-white ml-1">{lastChecked}</span>
               </div>
               
               <div className="flex items-center text-sm">
                 <AlertCircle className="h-3.5 w-3.5 text-amber-400 mr-1.5" />
                 <span className="text-gray-400">Alerts: </span>
-                <span className="text-white ml-1">Enabled</span>
+                <span className="text-white ml-1">{disabled ? "Disabled" : "Enabled"}</span>
               </div>
             </div>
           </div>

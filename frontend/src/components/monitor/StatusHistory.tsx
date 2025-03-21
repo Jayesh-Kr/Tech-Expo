@@ -11,7 +11,6 @@ interface StatusHistoryProps {
 const StatusHistory: React.FC<StatusHistoryProps> = ({ statusHistory }) => {
   const [hoveredSegment, setHoveredSegment] = useState<number | null>(null);
   
-  // Calculate statistics
   const upCount = statusHistory.filter(s => s.status === "up").length;
   const downCount = statusHistory.filter(s => s.status === "down").length;
   const warningCount = statusHistory.filter(s => s.status === "warning").length;

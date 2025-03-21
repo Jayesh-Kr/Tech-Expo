@@ -12,11 +12,11 @@ import {
 } from 'lucide-react';
 
 interface Event {
-  id: number;
+  id: string; // Use _id from the backend response
   type: 'up' | 'down' | 'warning' | 'info';
-  timestamp: Date;
+  timestamp: string; // Use createdAt from the backend response
   duration: string | null;
-  message: string;
+  message: string; // Use location or other fields for the message
 }
 
 interface RecentEventsProps {
@@ -37,9 +37,29 @@ const RecentEvents: React.FC<RecentEventsProps> = ({ events }) => {
     }
   };
   
-  const formatTime = (date: Date) => {
+  const formatTime = (dateString: string | undefined | null) => {
+    // If the dateString is undefined or null, return "N/A"
+    if (!dateString) {
+      return "N/A";
+    }
+
+    // Try to parse the date string
+    const parsedDate = new Date(dateString);
+    
+    // If the date is invalid, manually extract date and time from the string
+    if (isNaN(parsedDate.getTime())) {
+      // Extract date and time from the string (format: 2025-03-19T21:07:15.308Z)
+      const [datePart, timePart] = dateString.split('T');
+      if (!datePart || !timePart) {
+        return "Invalid date";
+      }
+      const time = timePart.split('.')[0]; // Remove milliseconds
+      return `${datePart} ${time}`; // Return as "2025-03-19 21:07:15"
+    }
+
+    // If the date is valid, calculate the time difference
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+    const diffMs = now.getTime() - parsedDate.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);

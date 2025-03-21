@@ -107,7 +107,6 @@ const StatCard: React.FC<StatCardProps> = ({
     <Card className={`bg-gradient-to-br ${color} backdrop-blur-sm border hover:shadow-lg transition-all duration-300 overflow-hidden group`}>
       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-[0.03] rounded-full -mt-10 -mr-10 group-hover:scale-110 transition-transform duration-500"></div>
       
-      {/* Add subtle particle effect */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute h-1 w-1 rounded-full bg-white/20 animate-float-slow top-1/4 left-1/4"></div>
         <div className="absolute h-1.5 w-1.5 rounded-full bg-white/15 animate-float-medium top-3/4 left-1/3"></div>

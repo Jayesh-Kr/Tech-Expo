@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Plus, Search, Filter, BarChart, AlertCircle, Bell, Settings, ArrowRight, Clock, User, Cpu, X, Trash2, Power } from "lucide-react";
-
+import { useAuth } from "@clerk/clerk-react";
 // Button component (unchanged)
 const Button = ({ children, onClick, className = "", variant = "default" }) => (
   <button
@@ -28,9 +28,15 @@ const MonitorCard = ({ monitor, onDelete, onToggle, isActive }) => {
     onToggle(monitor.id);
   };
 
+  // Ensure averageLatencyPerMinute is defined
+  const averageLatencyPerMinute = monitor.averageLatencyPerMinute || [];
+
   // Determine the status based on the last response
-  const lastResponse = monitor.averageLatencyPerMinute[monitor.averageLatencyPerMinute.length - 1]?.averageLatency;
+  const lastResponse = averageLatencyPerMinute[averageLatencyPerMinute.length - 1]?.averageLatency;
   const status = lastResponse === 0 ? "down" : "up";
+
+  // Ensure uptimePercentage is defined
+  const uptimePercentage = monitor.uptimePercentage || 0;
 
   return (
     <div className={`rounded-xl border ${isActive ? "border-gray-700 bg-gray-800/80" : "border-gray-700/50 bg-gray-800/40"} text-white shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-gray-600 relative group`}>
@@ -100,7 +106,7 @@ const MonitorCard = ({ monitor, onDelete, onToggle, isActive }) => {
                 <Clock className="h-3 w-3 mr-1.5" />
                 Uptime
               </p>
-              <p className="text-xl font-bold">{isActive ? monitor.uptimePercentage.toFixed(2) : "0.00"}%</p>
+              <p className="text-xl font-bold">{isActive ? uptimePercentage.toFixed(2) : "0.00"}%</p>
             </div>
             <div className="p-3 rounded-lg bg-gray-900/80 border border-gray-700">
               <p className="text-xs text-gray-400 mb-1 flex items-center">
@@ -115,9 +121,9 @@ const MonitorCard = ({ monitor, onDelete, onToggle, isActive }) => {
           
           <div className="h-16 mb-3 relative">
             <div className="absolute inset-0 flex items-end gap-0.5">
-              {isActive ? monitor.averageLatencyPerMinute.map((latencyData, i) => (
+              {isActive ? averageLatencyPerMinute.map((latencyData, i) => (
                 <div 
-                  key={i}
+                  key={i} // Add a unique key for each bar
                   style={{ height: `${latencyData.averageLatency > 0 ? Math.min(latencyData.averageLatency / 10, 100) : 10}%` }}
                   className={`flex-1 ${
                     latencyData.averageLatency === 0 
@@ -128,7 +134,7 @@ const MonitorCard = ({ monitor, onDelete, onToggle, isActive }) => {
               )) : (
                 Array(30).fill(null).map((_, i) => (
                   <div 
-                    key={i}
+                    key={i} // Add a unique key for each bar
                     style={{ height: `${Math.random() * 30 + 20}%` }}
                     className="flex-1 bg-gradient-to-t from-gray-500/30 to-gray-400/10 rounded-t-sm"
                   />
@@ -170,8 +176,9 @@ const StatCard = ({ title, value, icon, color }) => (
   </div>
 );
 
-// AddMonitor component (updated)
+// AddMonitor component (unchanged)
 const AddMonitor = ({ isOpen, onClose, onAdd }) => {
+  const {getToken} = useAuth();
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -186,12 +193,13 @@ const AddMonitor = ({ isOpen, onClose, onAdd }) => {
 
     setIsLoading(true);
     setError("");
-
+    const token = await getToken();
     try {
       const response = await fetch("http://localhost:3000/website", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization" : `Bearer ${token}`
         },
         body: JSON.stringify({ websiteName: name, url }),
       });
@@ -274,6 +282,7 @@ const AddMonitor = ({ isOpen, onClose, onAdd }) => {
 };
 
 const Dashboard = () => {
+  const {getToken} = useAuth();
   const [isAddMonitorOpen, setIsAddMonitorOpen] = useState(false);
   const [monitors, setMonitors] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -282,18 +291,20 @@ const Dashboard = () => {
 
   // Fetch data from the backend
   const fetchDashboardDetails = async () => {
-    console.log("Fetching after 1 min");
+    const token = await getToken();
     try {
       const response = await fetch("http://localhost:3000/dashboard-details", {
+        method: "GET",
         headers: {
-          id: "67da768ba901e50ce8b6a8c2",
+          "Content-Type": "application/json",
+          "Authorization" : `Bearer ${token}`
         },
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch dashboard details");
       }
-      
+
       const data = await response.json();
       console.log(data);
       setMonitors(data.websites);
@@ -305,7 +316,7 @@ const Dashboard = () => {
   // Poll the backend every 1 minute
   useEffect(() => {
     fetchDashboardDetails(); // Initial fetch
-    const interval = setInterval(fetchDashboardDetails, 60 * 1000); // Poll every 1 minute
+    const interval = setInterval(fetchDashboardDetails, 60000); // Poll every 1 minute
     return () => clearInterval(interval);
   }, []);
 
@@ -316,9 +327,14 @@ const Dashboard = () => {
 
   // Handle deleting a monitor
   const handleDeleteMonitor = async (monitorId) => {
+    const token = await getToken();
     try {
       const response = await fetch(`http://localhost:3000/website/${monitorId}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization" : `Bearer ${token}`
+        },
       });
 
       if (!response.ok) {
@@ -335,8 +351,14 @@ const Dashboard = () => {
   // Handle toggling a monitor
   const handleToggleMonitor = async (monitorId) => {
     try {
+      const token = await getToken();
+      console.log(`Monitor id  : ${monitorId}`);
       const response = await fetch(`http://localhost:3000/website-track/${monitorId}`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization" : `Bearer ${token}`
+        },
       });
 
       if (!response.ok) {
@@ -447,7 +469,7 @@ const Dashboard = () => {
               color="green" 
             />
             <StatCard 
-              title="Disabled" 
+              title="Paused" 
               value={disabledCount.toString()} 
               icon={<AlertCircle className="h-5 w-5" />} 
               color="red" 
@@ -513,7 +535,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredMonitors.map((monitor) => (
               <MonitorCard 
-                key={monitor.id} 
+                key={monitor.id} // Add a unique key for each monitor
                 monitor={monitor} 
                 onDelete={(id) => setDeleteDialog({ isOpen: true, monitorId: id, monitorName: monitor.websiteName })}
                 onToggle={handleToggleMonitor}

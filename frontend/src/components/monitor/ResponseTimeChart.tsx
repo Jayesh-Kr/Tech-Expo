@@ -26,57 +26,47 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Format time for display
   const formatTimeString = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
   
-  // Generate a realistic response time based on previous value
   const generateRealisticResponseTime = useCallback((prevValue = 200) => {
-    // Generate value that tends to cluster around the previous value
     const variation = Math.floor(Math.random() * 40) - 20; // -20 to +20 ms variation
-    
-    // Add occasional spikes (10% chance)
     const hasSpike = Math.random() < 0.1;
     const spikeAmount = hasSpike ? (Math.random() * 100) + 50 : 0;
-    
-    // Ensure value stays within reasonable bounds (50ms - 500ms)
     return Math.max(50, Math.min(500, prevValue + variation + spikeAmount));
   }, []);
   
-  // Initialize data
   useEffect(() => {
     if (initialData.length > 0) {
-      // Use provided data
       const now = new Date();
       const enhancedData = initialData.map((item, index) => ({
         ...item,
         timestamp: new Date(now.getTime() - (initialData.length - 1 - index) * 60000)
       }));
       setData(enhancedData);
-    } else {
-      // Generate 10 minutes of realistic data
-      const now = new Date();
-      let prevValue = 200;
+    } 
+    else {
+      // const now = new Date();
+      // let prevValue = 200;
       
-      const initialPoints = Array(10).fill(null).map((_, i) => {
-        const pointTime = new Date(now.getTime() - (9 - i) * 60000);
-        prevValue = generateRealisticResponseTime(prevValue);
-        return {
-          name: formatTimeString(pointTime),
-          responseTime: prevValue,
-          timestamp: pointTime
-        };
-      });
+      // const initialPoints = Array(10).fill(null).map((_, i) => {
+      //   const pointTime = new Date(now.getTime() - (9 - i) * 60000);
+      //   prevValue = generateRealisticResponseTime(prevValue);
+      //   return {
+      //     name: formatTimeString(pointTime),
+      //     responseTime: prevValue,
+      //     timestamp: pointTime
+      //   };
+      // });
       
-      setData(initialPoints);
+      // setData(initialPoints);
+      setData([]);
     }
-    setLastUpdated(new Date());
+    // setLastUpdated(new Date());
   }, [initialData, generateRealisticResponseTime]);
   
-  // Set up the timer to update exactly on the minute
   useEffect(() => {
-    // Clear any existing timers first to prevent multiple updates
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -94,14 +84,12 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({
         timestamp: now
       };
       
-      // Add new point and keep last 10 points
       setData(prevData => [...prevData.slice(-9), newPoint]);
       setLastUpdated(now);
       
       console.log(`Chart updated at ${now.toLocaleTimeString()} with value ${newResponseTime}ms`);
     };
     
-    // Calculate time until the next minute
     const calculateNextMinute = () => {
       const now = new Date();
       const secondsToNextMinute = 60 - now.getSeconds();
@@ -109,22 +97,17 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({
       return msToNextMinute;
     };
     
-    // Set a single timeout to align with the start of the next minute
     const initialTimeoutId = setTimeout(() => {
-      // First update when the minute changes
       updateData();
       
-      // Then set up a regular interval that runs every minute (not millisecond)
       const intervalId = setInterval(updateData, refreshInterval);
       intervalRef.current = intervalId;
       
       console.log(`Set up interval timer: ${refreshInterval}ms`);
     }, calculateNextMinute());
     
-    // Store the initial timeout ID for cleanup
     const initialTimeoutRef = initialTimeoutId;
     
-    // Clean up function to clear both the initial timeout and the interval
     return () => {
       clearTimeout(initialTimeoutRef);
       if (intervalRef.current) {
@@ -134,18 +117,15 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({
     };
   }, []); // Empty dependency array to run only once on mount
   
-  // Calculate stats from current data
   const currentValue = data[data.length - 1]?.responseTime || 0;
   const previousValue = data[data.length - 2]?.responseTime || 0;
   const averageValue = Math.round(data.reduce((sum, item) => sum + item.responseTime, 0) / (data.length || 1));
   const maxValue = Math.max(...data.map(item => item.responseTime), 400);
   
-  // Find anomalies and calculate trend
   const threshold = averageValue * 1.5;
   const anomalies = data.filter(item => item.responseTime > threshold);
   const trend = currentValue < previousValue ? 'down' : currentValue > previousValue ? 'up' : 'stable';
   
-  // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const value = payload[0].value;
