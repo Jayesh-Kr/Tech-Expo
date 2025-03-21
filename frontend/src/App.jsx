@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { SignIn, SignUp, RedirectToSignIn, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { SignIn, SignUp, useClerk, useSession } from "@clerk/clerk-react";
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import LandingPage from './pages/LandingPage.jsx';
@@ -22,21 +22,46 @@ import MonitorPage from "./components/monitor/MonitorPage";
 
 const App = () => {
   const location = useLocation();
-  
+  const { session } = useSession();
+  const { user } = useClerk();
+
+  // handleUserSignUp
+  const handleUserSignUp = async (user) => {
+    const userData = {
+      email: user.primaryEmailAddress.emailAddress,
+      userId: user.id
+    };
+    console.log(userData);
+    await fetch("http://localhost:3000/user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(userData)
+    });
+  };
+
+  // Listen for session changes (e.g., user signs up or signs in)
+  useEffect(() => {
+    if (session && user) {
+      handleUserSignUp(user);
+    }
+  }, [session, user]);
+
   // Determine which pages should hide the navbar and footer
   const hideNavbarFooter = ['/signup', '/signin', '/sign-up', '/sign-in'].includes(location.pathname);
-  
+
   useEffect(() => {
     // Handle smooth scrolling for anchor links
     const handleAnchorLinkClick = (e) => {
       const target = e.target;
-      
+
       // Check if the clicked element is an anchor link with a hash
       if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('#')) {
         e.preventDefault();
         const id = target.getAttribute('href').slice(1);
         const element = document.getElementById(id);
-        
+
         if (element) {
           element.scrollIntoView({
             behavior: 'smooth',
@@ -45,14 +70,14 @@ const App = () => {
         }
       }
     };
-    
+
     // Add event listener for anchor link clicks
     document.addEventListener('click', handleAnchorLinkClick);
-    
+
     // Check for scroll targets in URL params when the route changes
     const searchParams = new URLSearchParams(location.search);
     const scrollTarget = searchParams.get('scrollTo');
-    
+
     if (scrollTarget) {
       // Small delay to ensure the component is fully loaded
       setTimeout(() => {
@@ -62,7 +87,7 @@ const App = () => {
         }
       }, 100);
     }
-    
+
     // Clean up event listener
     return () => {
       document.removeEventListener('click', handleAnchorLinkClick);
@@ -73,13 +98,13 @@ const App = () => {
     <div className="min-h-screen flex flex-col relative bg-[#0B0B1F] overflow-hidden">
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-purple-900/10 to-[#0B0B1F]" />
-      
+
       {/* Glowing orbs */}
       <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-purple-500/30 rounded-full blur-[140px]" />
-      
+
       {/* Scroll restoration */}
       <ScrollToTop />
-      
+
       {/* Content */}
       {!hideNavbarFooter && <Navbar />}
       <Routes>
@@ -87,13 +112,13 @@ const App = () => {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/validator" element={<Validator />} />
         <Route path="/validators" element={<Validator />} /> {/* Redirect for plural */}
-        
+
         {/* Add routes for new pages */}
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
-        
+
         {/* Enhanced Clerk sign-up route with improved alignment */}
         <Route path="/sign-up/*" element={
           <div className="flex items-center justify-center min-h-screen px-4 py-10">
@@ -107,10 +132,11 @@ const App = () => {
                   <p className="text-gray-400 text-sm">Join our platform and start monitoring websites</p>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-5 overflow-hidden">
-                  <SignUp 
-                    routing="path" 
-                    path="/sign-up" 
-                    signInUrl="/sign-in" 
+                  <SignUp
+                    routing="path"
+                    path="/sign-up"
+                    signInUrl="/sign-in"
+                    afterSignUpUrl='/dashboard'
                     appearance={clerkAppearance}
                     redirectUrl="/dashboard"
                     socialButtonsPlacement="top"
@@ -120,7 +146,7 @@ const App = () => {
             </div>
           </div>
         } />
-        
+
         {/* Enhanced Clerk sign-in route with improved alignment */}
         <Route path="/sign-in/*" element={
           <div className="flex items-center justify-center min-h-screen px-4 py-20">
@@ -134,10 +160,10 @@ const App = () => {
                   <p className="text-gray-400 text-sm">Sign in to access your monitoring dashboard</p>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-6">
-                  <SignIn 
-                    routing="path" 
-                    path="/sign-in" 
-                    signUpUrl="/sign-up" 
+                  <SignIn
+                    routing="path"
+                    path="/sign-in"
+                    signUpUrl="/sign-up"
                     appearance={clerkAppearance}
                     redirectUrl="/dashboard"
                     socialButtonsPlacement="top"
@@ -147,16 +173,16 @@ const App = () => {
             </div>
           </div>
         } />
-        
+
         {/* Legacy routes with improved overflow handling */}
         <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
         <Route path="/signin" element={<Navigate to="/sign-in" replace />} />
-        
+
         {/* Protected validator routes - Remove protection for validator-dashboard */}
         <Route path="/signup-validator" element={<SignupValidator />} />
         <Route path="/signin-validator" element={<SigninValidator />} />
         <Route path="/validator-dashboard" element={<ValidatorDashboard />} />
-        
+
         {/* Protected dashboard route */}
         <Route
           path="/dashboard"
@@ -166,7 +192,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        
+
         {/* Protected monitor details route */}
         <Route
           path="/monitor/:id"
@@ -176,7 +202,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        
+
         <Route path="/demo-monitor" element={<MonitorPage />} />
       </Routes>
       {!hideNavbarFooter && <Footer />}
