@@ -26,7 +26,14 @@ const Validator = () => {
           <div className="absolute -bottom-20 -left-20 w-[300px] h-[300px] bg-blue-600/20 rounded-full blur-[100px]"></div>
           
           {/* Hero Content */}
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">Become a dPIN Validator</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-6 text-center">
+            <span className="relative inline-block">
+              <span className="absolute inset-0 bg-[linear-gradient(to_left,#4d4d4d,#848484_20%,#ffffff_50%,#848484_80%,#4d4d4d_100%)] bg-clip-text text-transparent blur-[2px] brightness-150"></span>
+              <span className="relative bg-[linear-gradient(to_left,#6b6b6b,#848484_20%,#ffffff_50%,#848484_80%,#6b6b6b_100%)] bg-clip-text text-transparent animate-shine-fast">
+                Become a dPIN Validator
+              </span>
+            </span>
+          </h1>
           
           <div className="bg-black/40 backdrop-blur-md rounded-2xl p-6 md:p-8 mb-10 border border-white/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 h-full w-2/5 bg-gradient-to-l from-purple-600/10 to-transparent"></div>
@@ -40,31 +47,6 @@ const Validator = () => {
             <p className="text-gray-300 mb-8 max-w-3xl">
               Unlike traditional monitoring services that rely on centralized servers, dPIN distributes monitoring responsibilities across a global network of independent validators, ensuring unparalleled reliability, transparency, and resistance to manipulation.
             </p>
-            
-            {/* Sign in banner for existing validators */}
-            <div className="bg-purple-900/30 border border-purple-500/30 rounded-xl p-4 mb-8 flex flex-col sm:flex-row items-center justify-between">
-              <div>
-                <h3 className="text-white font-medium mb-1">
-                  {isLoaded && isSignedIn 
-                    ? `Welcome back, ${userName || 'Validator'}!`
-                    : 'Already a validator?'}
-                </h3>
-                <p className="text-purple-200/80 text-sm">
-                  {isLoaded && isSignedIn
-                    ? 'Access your validator dashboard to view your status and rewards'
-                    : 'Sign in to access your validator dashboard and view your stats'}
-                </p>
-              </div>
-              
-              {isLoaded && (
-                <Link 
-                  to={isSignedIn ? "/dashboard" : "/signin-validator"} 
-                  className="mt-3 sm:mt-0 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-5 py-2 rounded-lg transition duration-200"
-                >
-                  {isSignedIn ? 'View Dashboard' : 'Sign In'}
-                </Link>
-              )}
-            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
               <div className="bg-black/30 p-4 rounded-xl border border-white/5">
@@ -94,7 +76,14 @@ const Validator = () => {
           </div>
         </div>
         
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Join Our Validator Network</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
+          <span className="relative inline-block">
+            <span className="absolute inset-0 bg-[linear-gradient(to_left,#4d4d4d,#848484_20%,#ffffff_50%,#848484_80%,#4d4d4d_100%)] bg-clip-text text-transparent blur-[2px] brightness-150"></span>
+            <span className="relative bg-[linear-gradient(to_left,#6b6b6b,#848484_20%,#ffffff_50%,#848484_80%,#6b6b6b_100%)] bg-clip-text text-transparent animate-shine-fast">
+              Join Our Validator Network
+            </span>
+          </span>
+        </h2>
         
         <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 md:p-8 mb-10 border border-white/10">
           <p className="text-gray-300 mb-6">
