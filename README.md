@@ -15,11 +15,8 @@ A **decentralized website monitoring system** leveraging **dPIN (Decentralized P
   <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/Lviffy/Tech-Expo">
 </div>
 
-
-
-
-
 ---
+
 ## 🔥 Key Features  
 🔹 **No Single Point of Failure** – Distributed monitoring across independent validators.  
 
@@ -27,9 +24,9 @@ A **decentralized website monitoring system** leveraging **dPIN (Decentralized P
 
 🔹 **Crypto Incentives** – Validators earn rewards for monitoring and reporting website health.  
 
-🔹 **Decentralized Monitoring** – Multiple nodes check website status instead of a single company.
+🔹 **Decentralized Monitoring** – Multiple nodes check website status instead of a single company.  
 
-🔹 **Real-Time Alerts** – Instant notifications for downtime or performance issues.
+🔹 **Real-Time Alerts** – Instant notifications for downtime or performance issues.  
 
 🔹 **Security & Privacy** – No third-party access to website data.  
 
@@ -44,7 +41,6 @@ Traditional website monitoring systems are **centralized, opaque, and vulnerable
 
 Our **dPIN-based monitoring system** decentralizes website uptime tracking by leveraging independent validators across a global network. Unlike traditional systems, which rely on a single authority, our solution ensures **real-time, trustless, and tamper-proof monitoring** without any central points of failure. Website owners can **prove uptime transparently**, while users receive **instant alerts** for downtime or performance issues. Validators are incentivized with **crypto rewards**, fostering a **self-sustaining, censorship-resistant** ecosystem that enhances reliability, security, and trust in website monitoring.
 
-
 ✨ **Website owners** can verify uptime transparently.  
 
 ⚡ **Users** receive **instant alerts** for downtime or performance issues.  
@@ -58,35 +54,70 @@ Our **dPIN-based monitoring system** decentralizes website uptime tracking by le
 
 🌍 **dPIN (Decentralized Public Infrastructure Network)** – Distributed monitoring  
 
-🔗 **Database**- MongoDB   
+🔗 **Database** – MongoDB   
 
-🖥️ **Frontend** – React.js /Radix UI/ Tailwind CS  /ShadCN  
+🖥️ **Frontend** – React.js, Radix UI, Tailwind CSS, ShadCN  
 
 📡 **Backend** – Node.js, Express.js
 
-⚙️ **Validator CLI** – commander.js, chalk
+🔒 **Authentication** – Clerk
+
+⚙️ **Validator CLI** – Commander.js, Chalk
 
 ---
 
 ## ⚙️ Installation & Setup  
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/dpin-monitoring.git
-cd dPIN
+git clone https://github.com/Lviffy/Tech-Expo.git
+cd Tech-Expo
 
-
-# Install dependencies
+# Install backend dependencies
+cd backend
 npm install
 
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your specific configuration
 
-# Run the application
-cd frontend
-npm i
+# Run the backend server
+node index.js
+
+# Install frontend dependencies
+cd ../frontend
+npm install
+
+# Set up frontend environment variables
+cp .env.example .env
+# Edit .env with your Clerk publishable key and other configs
+
+# Run the frontend development server
 npm run dev
 
-
-a link will be provided `http://localhost:5173` to redirect to project
+# Open your browser at http://localhost:5173
 ```
+
+## 🧠 Project Structure
+```
+Tech-Expo/
+├── backend/               # Express.js server
+│   ├── db/                # Database connection
+│   ├── model/             # MongoDB schemas
+│   ├── utils/             # Helper functions
+│   └── index.js           # Main server file
+├── frontend/              # React.js application
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # Page components
+│   │   ├── utils/         # Utility functions
+│   │   └── App.jsx        # Main application component
+│   └── public/            # Static assets
+└── validator-cli/         # CLI tool for validators
+    ├── src/               # Source code
+    └── utils/             # CLI utilities
+```
+
+---
 
 ## ℹ️ Additional Information  
 🔹 **Minimum Validator Balance** – To become a validator, your crypto wallet must have at least **0.05 SOL**. 
@@ -103,29 +134,45 @@ a link will be provided `http://localhost:5173` to redirect to project
 If you face any issues, try these steps:  
 
 ⚠️ **Issue:** App not starting  
-🔹 **Solution:** Ensure **Node.js** and **npm** are installed, and run `npm install` before `npm start`.  
-
+🔹 **Solution:** Ensure **Node.js** and **npm** are installed, and run `npm install` before starting the application.  
 
 ⚠️ **Issue:** Wallet not connecting  
-🔹 **Solution:** Make sure **Phantom** or any compatible crypto wallet is installed and connected to the correct network.  
-
+🔹 **Solution:** Make sure **Phantom** or any compatible Solana wallet is installed and connected to the correct network.  
 
 ⚠️ **Issue:** No real-time alerts  
 🔹 **Solution:** Check if notifications are **enabled** in browser settings.  
 
-
 ⚠️ **Issue:** Transaction failures  
-🔹 **Solution:** Ensure your wallet has **sufficient gas fees** for transactions.  
+🔹 **Solution:** Ensure your wallet has **sufficient SOL** for transactions.  
+
+⚠️ **Issue:** Authentication problems  
+🔹 **Solution:** Verify your Clerk API keys are correctly configured in your environment variables.
 
 ---
 
-## ❓ Where to get APIs
+## 📝 API Endpoints
 
+### User Endpoints
+- `POST /user` - Create a new user
+- `GET /dashboard-details` - Get user dashboard information
 
+### Website Monitoring Endpoints
+- `POST /website` - Register a new website for monitoring
+- `GET /website/:id` - Get details for a specific website
+- `DELETE /website/:id` - Remove a website from monitoring
+- `PUT /website-track/:id` - Enable/disable monitoring for a website
+- `GET /website-details:id` - Get detailed metrics for a website
 
+### Validator Endpoints
+- `POST /validator-login` - Authenticate as a validator
+- `GET /validator-details` - Get validator activity and rewards information
 
+---
 
-
+## 🙌 Team Members
+- **Rohan Kumar Mohanta**
+- **Jayesh Krishna**
+- **Shivangi Sharma**
 
 ---
 
@@ -146,7 +193,7 @@ We welcome contributions! Follow these steps:
 
 ---
 
-## 📜  If you found this useful, don’t forget to ⭐ star this repo!
+## 📜 If you found this useful, don't forget to ⭐ star this repo!
 ---
 
 
