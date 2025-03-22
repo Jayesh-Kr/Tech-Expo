@@ -282,7 +282,6 @@ app.put("/website-track/:id", authenticateUser, async (req, res) => {
 app.get("/website-details:id", authenticateUser, async (req, res) => {
   try {
     let websiteId = req.params.id;
-    console.log(websiteId);
     // Hardcoding website Id
     // websiteId = "67da786fa901e50ce8b6a8c5";
     if (!websiteId) {
@@ -404,7 +403,6 @@ app.delete("/website/:id", authenticateUser, async (req, res) => {
 app.get("/dashboard-details", authenticateUser, async (req, res) => {
   try {
     const userId = req.auth.userId; // Assuming authentication middleware sets `req.user`
-    console.log(userId);
     // Fetch all websites monitored by the user
     const websites = await Website.find({ userId });
 

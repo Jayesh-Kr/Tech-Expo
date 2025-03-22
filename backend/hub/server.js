@@ -1,3 +1,5 @@
+import { configDotenv } from 'dotenv';
+configDotenv({ path : '../.env'});
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 import mongoose from 'mongoose';
@@ -6,13 +8,44 @@ import nacl_util from "tweetnacl-util";
 import base58 from 'bs58';
 import { Website, Validator, WebsiteTick, DownLog, User } from '../model/model.js';
 import db from '../db/db.js';
+import nodemailer from "nodemailer";
 const CALLBACKS = {};
 const availableValidators = [];
 const COST_PER_VALIDATION = 100; // in lamports
-
 const wss = new WebSocketServer({ port: 8081 });
+const pass = process.env.PASS_NODEMAILER;
 
 console.log("Websocket server")
+
+// Send email
+const transporter = nodemailer.createTransport({
+    secure : true,
+    host : 'smtp.gmail.com',
+    port : 465,
+    auth : {
+        user : "krishna.jayesh1505@gmail.com",
+        pass : pass
+    }
+
+});
+
+async function sendEmail(userEmail,websiteName, websiteUrl, location) {
+    const mailOptions = {
+        from : "krishna.jayesh1505@gmail.com",
+        to : userEmail,
+        subject : "Website Down Notification",
+        html : `Your website ${websiteName}, ${websiteUrl} is down, Location : ${location}`,
+    }
+    console.log({...mailOptions});
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log("Email send successfully");
+    } catch(err) {
+        console.log("error while send the mail");
+        console.log(err.message);
+        console.log(err);
+    }
+}
 
 wss.on('connection', async (ws) => {
     // console.log(ws._eventsCount);
@@ -142,9 +175,22 @@ setInterval(async () => {
                         return;
                     }
                     if(status == "Bad") {
-                        const userId = await Website.findById(website._id).select("userId");
-                        const mail = await User.findOne({userId}).select("email");
+                        const id = await Website.findById(website._id).select("userId");
+                        const userId = id.userId;
+                        const mail = await User.findOne({userId});
+                        const userEmail = mail.email;
+                        console.log(userEmail);
+                        const now = new Date();
+                        const lastEmailSent = website.lastEmailSent || new Date(0);
+                        console.log(now - lastEmailSent);
+                        if((now - lastEmailSent) >= 60 * 60 * 1000) {
+                            await sendEmail(userEmail,website.websiteName,website.url,location);
+                            await Website.findByIdAndUpdate(website._id, {
+                                lastEmailSent : now
+                            })
+                        }
                         // Send Email to the user with coordinates and location
+                        
                     await DownLog.create({
                         websiteId : website._id,
                         location : location,

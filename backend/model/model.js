@@ -13,6 +13,7 @@ const websiteSchema = new mongoose.Schema({
   userId: { type: String, required: true, ref: "User" },
   createdAt: { type: Date, required: true, default: Date.now },
   disabled: { type: Boolean, default: false },
+  lastEmailSent : Date
 });
 
 const validatorSchema = new mongoose.Schema({
