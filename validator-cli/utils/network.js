@@ -111,53 +111,71 @@ function getTcpConnectionTime(hostname, port) {
  * @param {number} timeout Timeout in ms
  * @returns {Promise<{time: number, status: number}>} Time and status
  */
-async function performHeadRequest(url, timeout = 2000) {
+async function performHeadRequest(url, timeout = 2000, maxRedirects = 5) {
   const startTime = Date.now();
   try {
-    // Use lower-level http/https modules for more consistent timing
     const { protocol, hostname, pathname, search } = new URL(url);
-    
+    const port = protocol === 'https:' ? 443 : 80;
+
     return new Promise((resolve, reject) => {
-      const options = {
-        method: 'HEAD',
-        hostname: hostname,
-        path: pathname + (search || ''),
-        timeout: timeout,
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Connection': 'close' // Ensure connection is closed after request
-        }
-      };
-      
-      const req = (protocol === 'https:' ? require('https') : require('http')).request(options, (res) => {
-        // Resolve as soon as we get headers, don't wait for body
-        resolve({
-          time: Date.now() - startTime,
-          status: res.statusCode
+      const makeRequest = (currentUrl, redirectCount = 0) => {
+        const { protocol, hostname, pathname, search } = new URL(currentUrl);
+        const options = {
+          method: 'HEAD',
+          hostname: hostname,
+          path: pathname + (search || ''),
+          port: port,
+          timeout: timeout,
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Connection': 'close',
+          },
+        };
+
+        const req = (protocol === 'https:' ? https : http).request(options, (res) => {
+          if ([301, 302, 303, 307, 308].includes(res.statusCode)) {
+            if (redirectCount >= maxRedirects) {
+              reject(new Error('Too many redirects'));
+              return;
+            }
+
+            const location = res.headers.location;
+            if (!location) {
+              reject(new Error('Redirect location missing'));
+              return;
+            }
+
+            // Resolve the redirect URL relative to the current URL
+            const redirectUrl = new URL(location, currentUrl).toString();
+            makeRequest(redirectUrl, redirectCount + 1);
+          } else {
+            resolve({
+              time: Date.now() - startTime,
+              status: res.statusCode,
+              finalUrl: currentUrl, // Include the final URL after redirects
+            });
+          }
         });
-        
-        // Consume a small amount of the response then end
-        res.on('data', () => {});
-        res.resume();
-      });
-      
-      req.on('error', (e) => {
-        reject(e);
-      });
-      
-      req.on('timeout', () => {
-        req.destroy();
-        reject(new Error('Request timed out'));
-      });
-      
-      // End immediately since we don't need to send body data
-      req.end();
+
+        req.on('error', (e) => {
+          reject(e);
+        });
+
+        req.on('timeout', () => {
+          req.destroy();
+          reject(new Error('Request timed out'));
+        });
+
+        req.end();
+      };
+
+      makeRequest(url);
     });
   } catch (error) {
-    return { 
+    return {
       time: Date.now() - startTime,
       status: 0,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -173,38 +191,41 @@ async function measureLatency(url, options = {}) {
     timeout: 3000,
     preferNetworkPing: true,
     measureDns: true,
-    useHeadRequest: true
+    useHeadRequest: true,
+    maxRedirects: 5, // Add max redirects option
   };
-  
+
   const config = { ...defaults, ...options };
-  
+
   try {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname;
-    
+
     const results = {
       url,
       networkPing: null,
       httpLatency: null,
       dnsTime: null,
-      status: null
+      status: null,
+      finalUrl: url, // Track the final URL after redirects
     };
-    
+
     // For speed, run DNS and ping in parallel
     const [networkPing, dnsTime] = await Promise.all([
       getNetworkLatency(hostname),
-      config.measureDns ? getDnsResolutionTime(hostname) : Promise.resolve(null)
+      config.measureDns ? getDnsResolutionTime(hostname) : Promise.resolve(null),
     ]);
-    
+
     results.networkPing = networkPing;
     results.dnsTime = dnsTime;
-    
+
     // Perform a HEAD request for fastest response
     if (config.useHeadRequest) {
       try {
-        const headResponse = await performHeadRequest(url, config.timeout);
+        const headResponse = await performHeadRequest(url, config.timeout, config.maxRedirects);
         results.httpLatency = headResponse.time;
         results.status = headResponse.status;
+        results.finalUrl = headResponse.finalUrl; // Update final URL
       } catch (headError) {
         // Fall back to a simple axios check if HEAD fails
         try {
@@ -212,10 +233,12 @@ async function measureLatency(url, options = {}) {
           const response = await axios.get(url, {
             timeout: config.timeout,
             headers: { 'Cache-Control': 'no-cache' },
-            validateStatus: () => true
+            maxRedirects: config.maxRedirects, // Follow redirects
+            validateStatus: () => true,
           });
           results.httpLatency = Date.now() - startTime;
           results.status = response.status;
+          results.finalUrl = response.request.res.responseUrl; // Capture final URL
         } catch (getError) {
           results.status = 0;
         }
@@ -227,21 +250,24 @@ async function measureLatency(url, options = {}) {
         const response = await axios.get(url, {
           timeout: config.timeout,
           headers: { 'Cache-Control': 'no-cache' },
-          validateStatus: () => true
+          maxRedirects: config.maxRedirects, // Follow redirects
+          validateStatus: () => true,
         });
         results.httpLatency = Date.now() - startTime;
         results.status = response.status;
+        results.finalUrl = response.request.res.responseUrl; // Capture final URL
       } catch (error) {
         results.status = 0;
       }
     }
-    
+
     // Choose the best latency measure in this order:
     // 1. Network ping (if available and preferred)
     // 2. HTTP latency (if available)
-    results.bestLatency = (config.preferNetworkPing && results.networkPing) ? 
-      results.networkPing : results.httpLatency;
-    
+    results.bestLatency = config.preferNetworkPing && results.networkPing
+      ? results.networkPing
+      : results.httpLatency;
+
     return results;
   } catch (error) {
     return {
@@ -249,7 +275,7 @@ async function measureLatency(url, options = {}) {
       error: error.message,
       networkPing: null,
       httpLatency: null,
-      status: 0
+      status: 0,
     };
   }
 }

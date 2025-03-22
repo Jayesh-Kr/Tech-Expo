@@ -110,7 +110,9 @@ const getStatusCode = (url) => {
       headers: {
         'Cache-Control': 'no-cache',
         'Connection': 'close'
-      }
+      },
+      followRedirects: true, // Allow following redirects
+      maxRedirects: 5 // Limit the number of redirects to follow
     };
     
     const protocol = urlObj.protocol === 'https:' ? https : http;
@@ -118,6 +120,13 @@ const getStatusCode = (url) => {
     const req = protocol.request(options, (res) => {
       const time = Date.now() - startTime;
       res.resume();
+      
+      // If the response is a redirect, follow it
+      if ([301, 302, 303, 307, 308].includes(res.statusCode)) {
+        const redirectUrl = new URL(res.headers.location, url);
+        return resolve(getStatusCode(redirectUrl.toString()));
+      }
+      
       resolve({ time, status: res.statusCode });
     });
     
@@ -306,7 +315,8 @@ const connectWebsocket = async (privateKeyBase64, hubServer, spinner = null) => 
             logger.success(`Rewards: +${COST_PER_VALIDATION} lamports (Total: ${pendingPayouts})`);
             
             // Send validation result
-            if (responseStatus !== 200) {
+            if (responseStatus >= 400 && responseStatus <600) {
+              console.log("Inside if condition")
               // If bad status, get location again to ensure freshness
               let locationInfo = location;
               try {

@@ -130,6 +130,7 @@ setInterval(async () => {
             CALLBACKS[callbackId] = async (data) => {
                 if (data.type === 'validate') {
                     const { validatorId, status, latency, signedMessage,location } = data.data;
+                    console.log(`Latency : ${latency}`);
                     console.log(`Status : ${status}`);
                     console.log(`Location :  ${location}`);
                     const verified = await verifyMessage(
