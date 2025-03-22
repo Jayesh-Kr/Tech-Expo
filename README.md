@@ -87,7 +87,7 @@ a link will be provided `http://localhost:5173` to redirect to project
 ```
 
 ## ℹ️ Additional Information  
-🔹 **Minimum Validator Balance** – To become a validator, your crypto wallet must have at least **0.05 ETH**. 
+🔹 **Minimum Validator Balance** – To become a validator, your crypto wallet must have at least **0.05 SOL**. 
 
 🔹 **Wallet Public Key** – Needed for withdrawal of earned rewards. 
 
