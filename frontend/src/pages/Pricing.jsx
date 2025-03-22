@@ -37,8 +37,8 @@ const Pricing = () => {
     {
       name: "Pro",
       description: "For small businesses and growing websites",
-      price: annual ? "49" : "59",
-      billing: annual ? "/month, billed annually" : "/month, billed monthly",
+      price: annual ? "1" : "1.2",
+      billing: annual ? " SOL/month, billed annually" : " SOL/month, billed monthly",
       features: [
         { title: "10 websites monitored", included: true },
         { title: "Monitoring every 5 minutes", included: true },
@@ -57,8 +57,8 @@ const Pricing = () => {
     {
       name: "Enterprise",
       description: "For organizations with advanced monitoring needs",
-      price: annual ? "199" : "249",
-      billing: annual ? "/month, billed annually" : "/month, billed monthly",
+      price: annual ? "2" : "2.5",
+      billing: annual ? " SOL/month, billed annually" : " SOL/month, billed monthly",
       features: [
         { title: "Unlimited websites", included: true },
         { title: "Monitoring every 1 minute", included: true },
@@ -170,7 +170,7 @@ const Pricing = () => {
                 
                 <div className="mt-6 mb-8">
                   <p className="flex items-end">
-                    <span className="text-4xl font-bold text-white">${plan.price}</span>
+                    <span className="text-4xl font-bold text-white">{plan.price} SOL</span>
                     <span className="text-sm text-gray-400 ml-2">{plan.billing}</span>
                   </p>
                 </div>
