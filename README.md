@@ -64,13 +64,14 @@ Our **dPIN-based monitoring system** decentralizes website uptime tracking by le
 
 📡 **Backend** – Node.js, Express.js
 
+📡 **Validator CLI** – commander.js, chalk
 ---
 
 ## ⚙️ Installation & Setup  
 ```bash
 # Clone the repository
 git clone https://github.com/your-username/dpin-monitoring.git
-cd dpin-monitoring
+cd dPIN
 
 
 # Install dependencies
@@ -105,7 +106,7 @@ If you face any issues, try these steps:
 
 
 ⚠️ **Issue:** Wallet not connecting  
-🔹 **Solution:** Make sure **Metamask** or any compatible crypto wallet is installed and connected to the correct network.  
+🔹 **Solution:** Make sure **Phantom** or any compatible crypto wallet is installed and connected to the correct network.  
 
 
 ⚠️ **Issue:** No real-time alerts  
