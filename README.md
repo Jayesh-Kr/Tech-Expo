@@ -97,6 +97,51 @@ npm run dev
 # Open your browser at http://localhost:5173
 ```
 
+## 🔑 Getting API Keys
+
+Before you can run the application, you'll need to obtain several API keys and credentials:
+
+### 1. JWT Secret
+- This is used for authentication in the backend
+- Generate a secure random string:
+  ```bash
+  openssl rand -base64 32
+  ```
+  Or simply create a strong password-like string
+
+### 2. Solana Wallet Keys (Admin)
+- Generate a Solana keypair for the admin account:
+  ```bash
+  # Install Solana CLI tools if you haven't already
+  solana-keygen new
+  ```
+  - The output will show your public key and save your private key
+  - Use these values for `ADMIN_PUBLIC_KEY` and `ADMIN_PRIVATE_KEY`
+
+### 3. Solana RPC URL
+- Sign up for a free account at [Alchemy](https://www.alchemy.com/)
+- Create a new Solana app (can use Devnet for testing)
+- Copy the HTTP URL from your dashboard
+- Format: `https://solana-devnet.g.alchemy.com/v2/YOUR_API_KEY`
+
+### 4. Clerk Authentication
+- Create an account at [Clerk](https://clerk.dev/)
+- Set up a new application
+- From your Clerk dashboard:
+  - Get your `CLERK_PUBLISHABLE_KEY` (starts with `pk_test_`)
+  - Get your `CLERK_SECRET_KEY` (starts with `sk_test_`)
+  - Use the publishable key for both backend and frontend
+
+### 5. Email Service (Nodemailer)
+- If using Gmail:
+  1. Go to your Google Account → Security
+  2. Enable 2-Step Verification if not already enabled
+  3. Go to App passwords
+  4. Create a new app password
+  5. Use this password for `PASS_NODEMAILER`
+
+After obtaining all keys, add them to your `.env` files in both backend and frontend directories.
+
 ## 🧠 Project Structure
 ```
 Tech-Expo/
@@ -195,6 +240,7 @@ We welcome contributions! Follow these steps:
 
 ## 📜 If you found this useful, don't forget to ⭐ star this repo!
 ---
+````
 
 
 
