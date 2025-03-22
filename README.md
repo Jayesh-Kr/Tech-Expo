@@ -79,8 +79,9 @@ npm install
 
 
 # Run the application
-cd frontend_file
+cd frontend
 npm i
+npm install @clerk/clerk-react
 npm run dev
 
 
@@ -115,6 +116,16 @@ If you face any issues, try these steps:
 
 ⚠️ **Issue:** Transaction failures  
 🔹 **Solution:** Ensure your wallet has **sufficient gas fees** for transactions.  
+
+---
+
+## ❓ Where to get APIs
+
+
+
+
+
+
 
 ---
 
