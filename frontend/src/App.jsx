@@ -31,7 +31,6 @@ const App = () => {
       email: user.primaryEmailAddress.emailAddress,
       userId: user.id
     };
-    console.log(userData);
     await fetch("http://localhost:3000/user", {
       method: "POST",
       headers: {

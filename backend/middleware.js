@@ -8,14 +8,10 @@ export const authenticateUser = ClerkExpressRequireAuth();
 export const authenticateValidator = async (req, res, next) => {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
-        
         if (!token) {
             return res.status(401).json({ message: 'Authentication required' });
         }
-
         const decoded = jwt.verify(token, JWT_SECRET);
-        console.log("Decoded Value");
-        console.log(decoded);
         const user = await Validator.findById(decoded.userId);
 
         if (!user) {

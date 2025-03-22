@@ -28,10 +28,8 @@ const ValidatorDashboard = () => {
   const [publicKey, setPublicKey] = useState("0x1234567890abcdef"); // Mock public key
   const [ipAddress, setIpAddress] = useState("192.168.1.1"); // Mock IP address
   const [location, setLocation] = useState("Delhi, India"); // Mock location
-  const [averagePayout, setAveragePayout] = useState("0.01 ETH"); // Mock average payout
-  const [isValidating, setIsValidating] = useState(false);
-  const [startTime, setStartTime] = useState(null);
-  const [uptimeInterval, setUptimeInterval] = useState(null);
+  const [averagePayout, setAveragePayout] = useState("0.01 SOL"); // Mock average payout
+  const [withdrawing, setWithDrawing] = useState(false);
 
   const [mockRecentActivity, setMockRecentActivity] = useState([
     {
@@ -50,23 +48,19 @@ const ValidatorDashboard = () => {
   });
 
   // Start Validating
-  const validatorIdRef = useRef(null);
   useEffect(() => {
     const fetchValidatorDetails = async () => {
       const token = localStorage.getItem("token");
-      console.log(token);
       const res = await axios.get("http://localhost:3000/validator-detail", {
         headers: {
-          Authorization: token,
+          "Authorization": token,
           "Content-Type": "application/json",
         },
       });
-      console.log(res);
       const { name, location, payoutPublicKey, pendingPayouts, email } =
         res.data.validator;
       const totalValidator = res.data.totalValidator;
-      console.log(totalValidator);
-      const averagePayout = res.data.averagePayout;
+      const averagePayout = Number(res.data.averagePayout).toFixed(2);
       let recentWeb = res.data.recentWebsites;
       const transformedRecentWeb = recentWeb.map((activity) => {
         // Calculate time difference
@@ -113,33 +107,6 @@ const ValidatorDashboard = () => {
       console.log(err);
     }
   }, []);
-  useEffect(() => {
-    return () => {
-      if (uptimeInterval) {
-        clearInterval(uptimeInterval);
-      }
-    };
-  }, [uptimeInterval]);
-
-  const calculateUptime = (startTime) => {
-    const now = new Date();
-    const diff = Math.floor((now - startTime) / 1000); // difference in seconds
-
-    const hours = Math.floor(diff / 3600);
-    const minutes = Math.floor((diff % 3600) / 60);
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-  };
-
-  // Function for signing msg
-  const signMessage = async (message, keypair) => {
-    const messageBytes = nacl_util.decodeUTF8(message);
-    const signature = nacl.sign.detached(messageBytes, keypair.secretKey);
-    return JSON.stringify(Array.from(signature));
-  };
 
   // Simulate loading and auth check
   useEffect(() => {
@@ -155,9 +122,31 @@ const ValidatorDashboard = () => {
     navigate("/signin-validator");
   };
 
-  const handleWithdraw = () => {
-    alert("Withdraw function triggered");
-    // Implement the logic to withdraw the amount
+  const handleWithdraw = async () => {
+    setWithDrawing(true);
+    try {
+    console.log("Withdraw function triggered");
+    if(mockStats.rewards < 800000) {
+      alert(`Minimum 800,000 Lamports should be there to claim`);
+      return;
+    }
+    const token = localStorage.getItem("token");
+      console.log(token);
+      const res = await axios.post("http://localhost:3000/getPayout",{}, {
+        headers: {
+          "Authorization": token,
+          "Content-Type": "application/json",
+        },
+      });   
+      if(res.status == 200) {
+        alert("Payment successful");
+      }
+      console.log(res);   
+    } catch(err) {
+      console.log(err)
+    } finally {
+      setWithDrawing(false);
+    }
   };
 
   if (!isLoaded) {
@@ -218,7 +207,7 @@ const ValidatorDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
         >
           <div className="bg-black/30 backdrop-blur-md rounded-xl p-4 border border-white/10">
             <div className="flex items-start justify-between">
@@ -230,20 +219,6 @@ const ValidatorDashboard = () => {
               </div>
               <div className="p-2 bg-purple-500/20 rounded-lg">
                 <Activity className="h-5 w-5 text-purple-400" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-black/30 backdrop-blur-md rounded-xl p-4 border border-white/10">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Node Uptime</p>
-                <h3 className="text-2xl font-bold text-white">
-                  {mockStats.uptime}
-                </h3>
-              </div>
-              <div className="p-2 bg-green-500/20 rounded-lg">
-                <Server className="h-5 w-5 text-green-400" />
               </div>
             </div>
           </div>
@@ -434,7 +409,7 @@ const ValidatorDashboard = () => {
                       onClick={handleWithdraw}
                       className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors"
                     >
-                      Withdraw
+                      {withdrawing ? "Withdrawing" : "Withdraw"}
                     </button>
                   </div>
                 </div>

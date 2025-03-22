@@ -13,6 +13,7 @@ import cors from "cors";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { configDotenv } from "dotenv";
+import bs58 from "bs58";
 import {
   Connection,
   Keypair,
@@ -87,7 +88,6 @@ app.post("/validator", async (req, res) => {
   try {
     const { name, email, payoutPublicKey, publicKey, location, ip, password } =
       req.body;
-    console.log(`Payout publickey : ${payoutPublicKey}`);
     const publicKeyDB = await Validator.findOne({
       payoutPublicKey: payoutPublicKey,
     }).select("payoutPublicKey");
@@ -131,7 +131,6 @@ app.post("/validator-signin", async (req, res) => {
   try {
     const { email, password } = req.body;
     const getUser = await Validator.findOne({ email: email });
-    console.log(getUser._id);
     if (!getUser) {
       return res.status(400).json({
         message: "Validator not found. SignUp to become a validator",
@@ -193,6 +192,7 @@ app.get("/validator-detail", authenticateValidator, async (req, res) => {
 });
 
 app.post("/getPayout", authenticateValidator, async (req, res) => {
+  console.log("Getting payout to user");
   try {
     const { _id } = req.user;
     const validator = await Validator.findById(_id).select(
@@ -212,7 +212,7 @@ app.post("/getPayout", authenticateValidator, async (req, res) => {
       return res.status(400).json({ message: "No pending payout available" });
     }
 
-    const connection = new Connection(RPC_URL, "confirmed");
+    const connection = new Connection("https://api.devnet.solana.com");
 
     const transferTransaction = new Transaction().add(
       SystemProgram.transfer({
@@ -221,7 +221,12 @@ app.post("/getPayout", authenticateValidator, async (req, res) => {
         lamports: pendingPayouts,
       })
     );
-    const fromKeypair = Keypair.fromSecretKey(ADMIN_PRIVATE_KEY);
+    const secretKeyBytes = bs58.decode(ADMIN_PRIVATE_KEY);
+    const fromKeypair = Keypair.fromSecretKey(secretKeyBytes);
+    const balance = await connection.getBalance(fromKeypair.publicKey);
+    if(balance < 2000000) {
+      return res.status(400).json({message : "Low balance"})
+    }
     const signature = await sendAndConfirmTransaction(
       connection,
       transferTransaction,
@@ -231,8 +236,10 @@ app.post("/getPayout", authenticateValidator, async (req, res) => {
     return res.status(200).json({ message: "Payout successful", signature });
   } catch (err) {
     console.log("Error in Payout");
+    console.log(err);
     return res.status(400).json({
       message: "Error in Payout",
+      reason : "Atleast 0.0008 SOL is required"
     });
   }
 });
