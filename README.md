@@ -64,7 +64,8 @@ Our **dPIN-based monitoring system** decentralizes website uptime tracking by le
 
 📡 **Backend** – Node.js, Express.js
 
-📡 **Validator CLI** – commander.js, chalk
+⚙️ **Validator CLI** – commander.js, chalk
+
 ---
 
 ## ⚙️ Installation & Setup  
