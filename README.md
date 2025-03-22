@@ -82,7 +82,6 @@ npm install
 # Run the application
 cd frontend
 npm i
-npm install @clerk/clerk-react
 npm run dev
 
 
