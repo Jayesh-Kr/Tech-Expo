@@ -432,22 +432,6 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex gap-3">
-              <Button 
-                variant={monitorsActive ? "default" : "outline"} 
-                className={`gap-1 px-3 ${!monitorsActive ? "text-red-400 border-red-400/50" : ""}`} 
-                onClick={() => setMonitorsActive(!monitorsActive)}
-              >
-                <Power className={`h-4 w-4 ${!monitorsActive ? "text-red-400" : ""}`} />
-                <span className="hidden md:inline">{monitorsActive ? "Turn Off All" : "Turn On All"}</span>
-              </Button>
-              <Button variant="outline" className="gap-1 px-3" onClick={() => {}}>
-                <Bell className="h-4 w-4" />
-                <span className="hidden md:inline">Notifications</span>
-              </Button>
-              <Button variant="outline" className="gap-1 px-3" onClick={() => {}}>
-                <Settings className="h-4 w-4" />
-                <span className="hidden md:inline">Settings</span>
-              </Button>
               <Button onClick={() => setIsAddMonitorOpen(true)} className="gap-1">
                 <Plus className="h-4 w-4" />
                 <span>Add Monitor</span>
