@@ -316,7 +316,6 @@ const connectWebsocket = async (privateKeyBase64, hubServer, spinner = null) => 
             
             // Send validation result
             if ((responseStatus >= 400 && responseStatus <600) || responseStatus == 0 || responseStatus == "unknown") {
-              console.log("Inside if condition")
               // If bad status, get location again to ensure freshness
               let locationInfo = location;
               try {

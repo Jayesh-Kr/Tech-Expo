@@ -133,7 +133,7 @@ const StatusHistory: React.FC<StatusHistoryProps> = ({
               </div>
             </div>
             <div className="text-2xl font-bold text-green-400 group-hover:scale-110 transition-transform origin-right">
-              {uptimePercentage}%
+              {uptimePercentage.toFixed(2)}%
             </div>
           </CardContent>
         </Card>
@@ -165,7 +165,7 @@ const StatusHistory: React.FC<StatusHistoryProps> = ({
               </div>
             </div>
             <div className="text-2xl font-bold text-red-400">
-              {100 - uptimePercentage}%
+              {(100 - uptimePercentage).toFixed(2)}%
             </div>
           </CardContent>
         </Card>

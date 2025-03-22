@@ -40,7 +40,7 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({
   useEffect(() => {
     if (initialData.length > 0) {
       const now = new Date();
-      const enhancedData = initialData.map((item, index) => ({
+      const enhancedData = initialData?.slice(0, Math.min(50, initialData?.length || 0)).map((item, index) => ({
         ...item,
         timestamp: new Date(now.getTime() - (initialData.length - 1 - index) * 60000)
       }));
@@ -201,7 +201,7 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({
         
         <div className="flex flex-wrap gap-2">
           <Badge className="bg-gray-700 border-gray-600 text-gray-300">
-            Current: <span className="font-mono ml-1 text-blue-400">{currentValue}ms</span>
+            Current: <span className="font-mono ml-1 text-blue-400">{currentValue.toFixed(2)}ms</span>
           </Badge>
           <Badge className="bg-gray-700 border-gray-600 text-gray-300">
             Average: <span className="font-mono ml-1 text-indigo-400">{averageValue}ms</span>
