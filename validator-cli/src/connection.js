@@ -315,7 +315,8 @@ const connectWebsocket = async (privateKeyBase64, hubServer, spinner = null) => 
             logger.success(`Rewards: +${COST_PER_VALIDATION} lamports (Total: ${pendingPayouts})`);
             
             // Send validation result
-            if (responseStatus >= 400 && responseStatus <600) {
+            console.log(responseStatus);
+            if ((responseStatus >= 400 && responseStatus <600) || responseStatus == 0 || responseStatus == "unknown") {
               console.log("Inside if condition")
               // If bad status, get location again to ensure freshness
               let locationInfo = location;
@@ -332,7 +333,7 @@ const connectWebsocket = async (privateKeyBase64, hubServer, spinner = null) => 
                   data: {
                     callbackId,
                     status: "Bad",
-                    latency,
+                    latency : 0,
                     validatorId,
                     signedMessage: signature,
                     location: locationInfo,
