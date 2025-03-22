@@ -30,6 +30,8 @@ const ValidatorDashboard = () => {
   const [location, setLocation] = useState("Delhi, India"); // Mock location
   const [averagePayout, setAveragePayout] = useState("0.01 SOL"); // Mock average payout
   const [withdrawing, setWithDrawing] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   const [mockRecentActivity, setMockRecentActivity] = useState([
     {
@@ -125,12 +127,14 @@ const ValidatorDashboard = () => {
   const handleWithdraw = async () => {
     setWithDrawing(true);
     try {
-    console.log("Withdraw function triggered");
-    if(mockStats.rewards < 800000) {
-      alert(`Minimum 800,000 Lamports should be there to claim`);
-      return;
-    }
-    const token = localStorage.getItem("token");
+      console.log("Withdraw function triggered");
+      if(mockStats.rewards < 800000) {
+        setAlertMessage("Minimum 800,000 Lamports should be there to claim");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 5000); // Hide alert after 5 seconds
+        return;
+      }
+      const token = localStorage.getItem("token");
       console.log(token);
       const res = await axios.post("http://localhost:3000/getPayout",{}, {
         headers: {
@@ -139,7 +143,9 @@ const ValidatorDashboard = () => {
         },
       });   
       if(res.status == 200) {
-        alert("Payment successful");
+        setAlertMessage("Payment successful");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 5000); // Hide alert after 5 seconds
       }
       console.log(res);   
     } catch(err) {
@@ -160,6 +166,55 @@ const ValidatorDashboard = () => {
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+      {/* Enhanced Alert Popup */}
+      {showAlert && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="fixed top-24 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-gray-900 to-black border border-purple-500/50 text-white px-8 py-4 rounded-xl shadow-2xl z-50 max-w-lg w-full backdrop-blur-lg"
+        >
+          <div className="flex items-start space-x-4">
+            <div className={`p-3 rounded-full ${alertMessage.includes("Minimum") ? "bg-yellow-500/20" : "bg-green-500/20"}`}>
+              {alertMessage.includes("Minimum") ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+            <div>
+              <h3 className={`text-lg font-semibold ${alertMessage.includes("Minimum") ? "text-yellow-400" : "text-green-400"}`}>
+                {alertMessage.includes("Minimum") ? "Action Required" : "Success"}
+              </h3>
+              <p className="text-gray-300 mt-1">{alertMessage}</p>
+            </div>
+          </div>
+          
+          <div className="mt-4 flex justify-end">
+            <button 
+              onClick={() => setShowAlert(false)}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium"
+            >
+              Dismiss
+            </button>
+          </div>
+          
+          <button 
+            onClick={() => setShowAlert(false)}
+            className="absolute top-2 right-2 text-gray-400 hover:text-white"
+            aria-label="Close"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </motion.div>
+      )}
+
       {/* Auth Status Indicator */}
       <div className="max-w-7xl mx-auto mb-4">
         <div className="bg-green-500/20 text-green-300 px-4 py-2 rounded-lg text-sm flex items-center">
@@ -304,112 +359,62 @@ const ValidatorDashboard = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="lg:col-span-1"
           >
-            <div className="bg-black/30 backdrop-blur-md rounded-xl border border-white/10 p-6">
+            <div className="bg-black/40 backdrop-blur-md rounded-xl border border-white/10 p-6 h-full flex flex-col">
               <h2 className="text-xl font-semibold text-white mb-4">
                 Validator Control Panel
               </h2>
 
-              <div className="space-y-2">
-                <button className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-lg text-left">
-                  <div className="flex items-center">
-                    <Settings className="h-5 w-5 text-gray-400 mr-3" />
-                    <span className="text-white">Node Settings</span>
-                  </div>
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
+              {/* Removed the node settings, notifications, and security buttons */}
 
-                <button className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-lg text-left">
-                  <div className="flex items-center">
-                    <Bell className="h-5 w-5 text-gray-400 mr-3" />
-                    <span className="text-white">Notifications</span>
-                  </div>
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-
-                <button className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-lg text-left">
-                  <div className="flex items-center">
-                    <Shield className="h-5 w-5 text-gray-400 mr-3" />
-                    <span className="text-white">Security</span>
-                  </div>
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="mt-8 pt-4 border-t border-white/10">
-                <div className="bg-white/5 rounded-lg p-4">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                      {userName[0] || "V"}
-                    </div>
+              <div className="mt-4 pt-4 border-t border-white/10 flex-grow">
+                <div className="bg-white/5 rounded-lg p-4 h-full">
+                  <div className="mb-3">
                     <div>
                       <div className="font-medium text-white">{userName}</div>
                       <div className="text-sm text-gray-400">{email}</div>
-                      <div className="text-sm text-gray-400">
-                        Public Key: {publicKey}
+                      <div className="text-sm mt-2">
+                        <span className="font-medium text-purple-400">Public Key:</span> 
+                        <span className="text-gray-300 break-all ml-1">{publicKey}</span>
                       </div>
-                      <div className="text-sm text-gray-400">
-                        IP Address: {ipAddress}
+                      <div className="text-sm mt-2">
+                        <span className="font-medium text-purple-400">IP Address:</span> 
+                        <span className="text-gray-300 ml-1">{ipAddress}</span>
                       </div>
-                      <div className="text-sm text-gray-400">
-                        Location: {location}
+                      <div className="text-sm mt-2">
+                        <span className="font-medium text-purple-400">Location:</span> 
+                        <span className="text-gray-300 ml-1">{location}</span>
                       </div>
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full mt-2 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2 rounded-lg transition-colors"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </button>
+                  <div className="mt-auto pt-4">
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full mt-2 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2 rounded-lg transition-colors"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-8 pt-4 border-t border-white/10">
+              <div className="mt-4 pt-4 border-t border-white/10">
                 <div className="bg-white/5 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-center">
                     <button
                       onClick={handleWithdraw}
-                      className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors"
+                      className="bg-purple-500 hover:bg-purple-600 text-white py-3 px-6 rounded-lg transition-colors text-lg font-medium w-full"
+                      disabled={withdrawing}
                     >
-                      {withdrawing ? "Withdrawing" : "Withdraw"}
+                      {withdrawing ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin mr-2 h-5 w-5 border-2 border-white rounded-full border-t-transparent"></div>
+                          Withdrawing...
+                        </div>
+                      ) : (
+                        "Withdraw Rewards"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -417,6 +422,98 @@ const ValidatorDashboard = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* CLI Installation Guide */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="mt-8 bg-black/30 backdrop-blur-md rounded-xl border border-white/10 p-6"
+        >
+          <h2 className="text-xl font-semibold text-white mb-4">
+            Validator CLI
+          </h2>
+          <div className="space-y-4">
+            <div className="bg-black/50 rounded-lg p-4 border border-white/5">
+              <h3 className="text-purple-400 font-medium mb-2">A decentralized uptime validator CLI for monitoring website availability</h3>
+              <p className="text-gray-300 mb-4">
+                Our Command Line Interface (CLI) tool allows validators to participate in the dPIN network. Follow these steps to get started:
+              </p>
+              
+              <div className="space-y-1 mb-4">
+                <h4 className="text-white font-medium">Requirements</h4>
+                <ul className="list-disc list-inside space-y-1 text-gray-300 ml-2">
+                  <li>Node.js 14 or higher</li>
+                  <li>npm 6 or higher</li>
+                  <li>Connection to a validator hub server</li>
+                </ul>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-white font-medium mb-1">Installation</h4>
+                  <p className="text-gray-300 text-sm mb-2">Since this package is not published to the npm registry, you need to install it locally:</p>
+                  <pre className="bg-black/70 p-3 rounded-md overflow-x-auto text-gray-300 text-sm">
+                    <code># Clone or download the repository
+# Then navigate to the project directory
+cd validator-cli
+
+# Install dependencies
+npm install
+
+# Create a global symlink to use the CLI from anywhere
+npm link</code>
+                  </pre>
+                </div>
+                
+                <div>
+                  <h4 className="text-white font-medium mb-1">Getting Started</h4>
+                  <p className="text-gray-300 text-sm mb-2">Here's how to get up and running with the Validator CLI:</p>
+                  
+                  <div className="pl-2 border-l-2 border-purple-500/30 ml-2">
+                    <p className="text-gray-300 text-sm mb-1">1. Make sure you have completed the installation steps above</p>
+                    
+                    <p className="text-gray-300 text-sm mb-1 mt-2">2. Start the validator client</p>
+                    <pre className="bg-black/70 p-2 rounded-md overflow-x-auto text-gray-300 text-sm">
+                      <code>validator-cli start ./config/privateKey.txt</code>
+                    </pre>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <h4 className="text-white font-medium mb-2">Available Commands</h4>
+                <ul className="list-disc list-inside space-y-2 text-gray-300">
+                  <li><code className="bg-black/50 px-1 rounded text-purple-300">validator-cli start /path/to/privateKey.txt</code> - Start the validator</li>
+                  <li><code className="bg-black/50 px-1 rounded text-purple-300">validator-cli info /path/to/privateKey.txt</code> - View validator info</li>
+                  <li><code className="bg-black/50 px-1 rounded text-purple-300">validator-cli ping https://example.com</code> - Manually ping a URL</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-lg p-4 border border-purple-500/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-white font-medium">GitHub Repository</h3>
+                  <p className="text-gray-300 text-sm mt-1">
+                    Clone the repository, report issues, and contribute to the project
+                  </p>
+                </div>
+                <a 
+                  href="https://www.github.com/lviffy/dPIN-cli" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg transition-colors text-sm flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                  </svg>
+                  View on GitHub
+                </a>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
