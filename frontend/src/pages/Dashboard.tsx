@@ -121,7 +121,7 @@ const MonitorCard = ({ monitor, onDelete, onToggle, isActive }) => {
           
           <div className="h-16 mb-3 relative">
             <div className="absolute inset-0 flex items-end gap-0.5">
-              {isActive ? averageLatencyPerMinute.map((latencyData, i) => (
+              {isActive ? averageLatencyPerMinute.slice(0, Math.min(50,averageLatencyPerMinute?.length || 0)).map((latencyData, i) => (
                 <div 
                   key={i} // Add a unique key for each bar
                   style={{ height: `${latencyData.averageLatency > 0 ? Math.min(latencyData.averageLatency / 10, 100) : 10}%` }}
@@ -212,6 +212,7 @@ const AddMonitor = ({ isOpen, onClose, onAdd }) => {
       onAdd(newMonitor);
       setName("");
       setUrl("");
+      window.location.reload();
       onClose();
     } catch (error) {
       setError("Failed to add monitor. Please try again.");

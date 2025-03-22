@@ -96,12 +96,11 @@ const MonitorDetails = () => {
           url={monitor.url}
           status={monitor.disabled ? "down" : "up"}
           uptimePercentage={monitor.uptimePercentage}
-          lastChecked={monitor.averageLatencyPerMinute[monitor?.averageLatencyPerMinute?.length - 1]?.timestamp || "N/A"}
           disabled={monitor.disabled}
         />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <Card className="bg-gray-800/40 border-gray-700 animate-slide-up">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
@@ -184,7 +183,7 @@ const MonitorDetails = () => {
             </h2>
             <p className="text-sm text-gray-400">Last 30 minutes of monitoring data</p>
           </div>
-          <StatusHistory statusHistory={monitor.averageLatencyPerMinute} />
+          <StatusHistory statusHistory={monitor.averageLatencyPerMinute?.slice(0, Math.min(50, monitor.averageLatencyPerMinute?.length || 0))} uptimePercentage={monitor.uptimePercentage} />
         </div>
 
         <MonitorStats 

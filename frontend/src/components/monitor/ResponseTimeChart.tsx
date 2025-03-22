@@ -19,7 +19,7 @@ interface ResponseTimeChartProps {
 
 const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({ 
   initialData = [],
-  refreshInterval = 60000 // Exactly 1 minute (60000ms)
+  refreshInterval = 1200 * 1000 // Exactly 1 minute (60000ms)
 }) => {
   const [data, setData] = useState<{ name: string; responseTime: number; timestamp: Date }[]>([]);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
@@ -66,56 +66,56 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({
     // setLastUpdated(new Date());
   }, [initialData, generateRealisticResponseTime]);
   
-  useEffect(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+  // useEffect(() => {
+  //   if (intervalRef.current) {
+  //     clearInterval(intervalRef.current);
+  //     intervalRef.current = null;
+  //   }
 
-    const updateData = () => {
-      const now = new Date();
-      const newResponseTime = generateRealisticResponseTime(
-        data.length > 0 ? data[data.length - 1].responseTime : 200
-      );
+  //   const updateData = () => {
+  //     const now = new Date();
+  //     const newResponseTime = generateRealisticResponseTime(
+  //       data.length > 0 ? data[data.length - 1].responseTime : 200
+  //     );
       
-      const newPoint = {
-        name: formatTimeString(now),
-        responseTime: newResponseTime,
-        timestamp: now
-      };
+  //     const newPoint = {
+  //       name: formatTimeString(now),
+  //       responseTime: newResponseTime,
+  //       timestamp: now
+  //     };
       
-      setData(prevData => [...prevData.slice(-9), newPoint]);
-      setLastUpdated(now);
+  //     setData(prevData => [...prevData.slice(-9), newPoint]);
+  //     setLastUpdated(now);
       
-      console.log(`Chart updated at ${now.toLocaleTimeString()} with value ${newResponseTime}ms`);
-    };
+  //     console.log(`Chart updated at ${now.toLocaleTimeString()} with value ${newResponseTime}ms`);
+  //   };
     
-    const calculateNextMinute = () => {
-      const now = new Date();
-      const secondsToNextMinute = 60 - now.getSeconds();
-      const msToNextMinute = secondsToNextMinute * 1000 - now.getMilliseconds();
-      return msToNextMinute;
-    };
+  //   const calculateNextMinute = () => {
+  //     const now = new Date();
+  //     const secondsToNextMinute = 60 - now.getSeconds();
+  //     const msToNextMinute = secondsToNextMinute * 1000 - now.getMilliseconds();
+  //     return msToNextMinute;
+  //   };
     
-    const initialTimeoutId = setTimeout(() => {
-      updateData();
+  //   const initialTimeoutId = setTimeout(() => {
+  //     updateData();
       
-      const intervalId = setInterval(updateData, refreshInterval);
-      intervalRef.current = intervalId;
+  //     const intervalId = setInterval(updateData, refreshInterval);
+  //     intervalRef.current = intervalId;
       
-      console.log(`Set up interval timer: ${refreshInterval}ms`);
-    }, calculateNextMinute());
+  //     console.log(`Set up interval timer: ${refreshInterval}ms`);
+  //   }, calculateNextMinute());
     
-    const initialTimeoutRef = initialTimeoutId;
+  //   const initialTimeoutRef = initialTimeoutId;
     
-    return () => {
-      clearTimeout(initialTimeoutRef);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, []); // Empty dependency array to run only once on mount
+  //   return () => {
+  //     clearTimeout(initialTimeoutRef);
+  //     if (intervalRef.current) {
+  //       clearInterval(intervalRef.current);
+  //       intervalRef.current = null;
+  //     }
+  //   };
+  // }, []); // Empty dependency array to run only once on mount
   
   const currentValue = data[data.length - 1]?.responseTime || 0;
   const previousValue = data[data.length - 2]?.responseTime || 0;

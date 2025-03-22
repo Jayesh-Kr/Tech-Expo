@@ -14,7 +14,7 @@ import {
 interface Event {
   id: string; // Use _id from the backend response
   type: 'up' | 'down' | 'warning' | 'info';
-  timestamp: string; // Use createdAt from the backend response
+  createdAt: string; // Use createdAt from the backend response
   duration: string | null;
   message: string; // Use location or other fields for the message
 }
@@ -87,7 +87,7 @@ const RecentEvents: React.FC<RecentEventsProps> = ({ events }) => {
         {events.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
             <div className="mx-auto h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-3">
-              <CheckCircle className="h-6 w-6 text-blue-400" />
+              <CheckCircle className="h-6 w-6 text-red-400" />
             </div>
             <p className="text-sm font-medium text-gray-400">No events to display</p>
             <p className="text-xs text-gray-500 mt-1">Your monitor is running smoothly</p>
@@ -105,29 +105,29 @@ const RecentEvents: React.FC<RecentEventsProps> = ({ events }) => {
                   event.type === 'up' ? 'bg-green-500/20' : 
                   event.type === 'down' ? 'bg-red-500/20' : 
                   event.type === 'warning' ? 'bg-yellow-500/20' : 
-                  'bg-blue-500/20'
+                  'bg-red-500/55'
                 }`}>
                   {getEventIcon(event.type)}
                 </div>
                 
                 <div className="mb-1 flex items-center justify-between">
                   <h4 className={`text-sm font-medium ${
-                    event.type === 'up' ? 'text-green-400' : 
+                    event.type === 'up' ? 'text-red-400' : 
                     event.type === 'down' ? 'text-red-400' : 
-                    event.type === 'warning' ? 'text-yellow-400' : 
-                    'text-blue-400'
+                    event.type === 'warning' ? 'text-red-400' : 
+                    'text-red-400'
                   }`}>
                     {event.type === 'up' ? 'Service Restored' :
-                     event.type === 'down' ? 'Service Outage' :
-                     event.type === 'warning' ? 'Performance Degraded' :
-                     'Maintenance'}
+                     event.type === 'warning' ? 'Service Outage' : "Server Down"
+                     }
                   </h4>
                   <div className="flex items-center gap-2">
                     <Badge 
                       variant="outline" 
                       className="text-xs border-gray-700 bg-gray-800/50 text-gray-400"
                     >
-                      {formatTime(event.timestamp)}
+                      {formatTime(event.createdAt)}
+                      {/* {event.createdAt} */}
                     </Badge>
                   </div>
                 </div>

@@ -8,7 +8,6 @@ interface MonitorHeaderProps {
   url: string;
   status: "up" | "down" | "warning";
   uptimePercentage: number;
-  lastChecked: string;
   disabled: boolean;
   onRefresh?: () => void;
   isRefreshing?: boolean;
@@ -19,7 +18,6 @@ const MonitorHeader: React.FC<MonitorHeaderProps> = ({
   url,
   status,
   uptimePercentage,
-  lastChecked,
   disabled,
   onRefresh,
   isRefreshing = false
@@ -85,7 +83,7 @@ const MonitorHeader: React.FC<MonitorHeaderProps> = ({
               <div className="flex items-center text-sm">
                 <Clock className="h-3.5 w-3.5 text-blue-400 mr-1.5" />
                 <span className="text-gray-400">Last checked: </span>
-                <span className="text-white ml-1">{lastChecked}</span>
+                <span className="text-white ml-1">Checking every 1 min</span>
               </div>
               
               <div className="flex items-center text-sm">
