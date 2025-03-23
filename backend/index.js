@@ -7,7 +7,7 @@ import {
   User,
   DownLog,
 } from "./model/model.js";
-import { authenticateUser, authenticateValidator } from "./middleware.js";
+import { authenticateValidator } from "./middleware.js";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import bcrypt from "bcrypt";
@@ -24,6 +24,7 @@ import {
   PublicKey,
 } from "@solana/web3.js";
 import { verifyIPLocation } from "./utils/script.js";
+import { clerkMiddleware, requireAuth } from '@clerk/express'
 configDotenv();
 const app = express();
 app.use(cors());
@@ -42,42 +43,6 @@ app.post("/user", async (req, res) => {
       userId : req.body.userId
     });
     res.status(201).json(user);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-// Website Creation
-// authenticatUser middleware -> add
-app.post("/website", authenticateUser, async (req, res) => {
-  try {
-    console.log("Reacher cretion of the server");
-    const website = await Website.create({
-      url: req.body.url,
-      userId: req.auth.userId,
-      websiteName: req.body.websiteName,
-    });
-    res.status(201).json(website);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-// Fetch Website Details
-app.get("/website/:id", authenticateUser, async (req, res) => {
-  try {
-    const userId = req.auth.userId; // Get the user ID from Clerk
-
-    const website = await Website.findOne({
-      _id: req.params.id,
-      userId: userId, // Use the user ID from Clerk
-    });
-
-    if (!website) {
-      return res.status(404).json({ message: "Website not found" });
-    }
-
-    res.json(website);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -259,8 +224,46 @@ app.post("/website-tick", async (req, res) => {
   }
 });
 
+app.use(clerkMiddleware());
+
+// Website Creation
+// authenticatUser middleware -> add
+app.post("/website", requireAuth(), async (req, res) => {
+  try {
+    console.log("Reacher cretion of the server");
+    const website = await Website.create({
+      url: req.body.url,
+      userId: req.auth.userId,
+      websiteName: req.body.websiteName,
+    });
+    res.status(201).json(website);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Fetch Website Details
+app.get("/website/:id", requireAuth(), async (req, res) => {
+  try {
+    const userId = req.auth.userId; // Get the user ID from Clerk
+
+    const website = await Website.findOne({
+      _id: req.params.id,
+      userId: userId, // Use the user ID from Clerk
+    });
+
+    if (!website) {
+      return res.status(404).json({ message: "Website not found" });
+    }
+
+    res.json(website);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 // Update Website Tracking
-app.put("/website-track/:id", authenticateUser, async (req, res) => {
+app.put("/website-track/:id", requireAuth(), async (req, res) => {
   console.log("Reached the update section");
   try {
     const disabled = await Website.findById({ _id: req.params.id }).select(
@@ -286,7 +289,7 @@ app.put("/website-track/:id", authenticateUser, async (req, res) => {
 });
 
 // Get Website details to Frontend
-app.get("/website-details:id", authenticateUser, async (req, res) => {
+app.get("/website-details:id", requireAuth(), async (req, res) => {
   try {
     let websiteId = req.params.id;
     // Hardcoding website Id
@@ -386,7 +389,7 @@ app.get("/website-details:id", authenticateUser, async (req, res) => {
 });
 
 // Delete Website
-app.delete("/website/:id", authenticateUser, async (req, res) => {
+app.delete("/website/:id", requireAuth(), async (req, res) => {
   try {
     const userId = req.auth.userId; // Get the user ID from Clerk
     const website = await Website.findOneAndDelete({
@@ -407,7 +410,7 @@ app.delete("/website/:id", authenticateUser, async (req, res) => {
   }
 });
 
-app.get("/dashboard-details", authenticateUser, async (req, res) => {
+app.get("/dashboard-details", requireAuth(), async (req, res) => {
   try {
     const userId = req.auth.userId; // Assuming authentication middleware sets `req.user`
     // Fetch all websites monitored by the user
