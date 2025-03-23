@@ -197,9 +197,9 @@ const MonitorDetails = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Cpu className="h-5 w-5 text-indigo-400" />
-              Response Time Monitor
+                <p className="text-white text-[22px]">Response Time Monitor</p>
             </CardTitle>
-            <CardDescription>Real-time data refreshing every minute</CardDescription>
+            <CardDescription><p className="text-[#9CA3AF]">Real-time data refreshing every minute</p></CardDescription>
           </CardHeader>
           <CardContent>
             <ResponseTimeChart 
@@ -213,11 +213,11 @@ const MonitorDetails = () => {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RecentEvents events={monitor.downlog.slice(0, 4)} />
+          <RecentEvents events={monitor.downlog} />
           
           <Card className="bg-gray-800/40 border-gray-700">
             <CardHeader>
-              <CardTitle className="text-lg">Monitor Details</CardTitle>
+              <CardTitle className="text-lg"><p className="text-white text-[20px]">Monitor Details</p></CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">

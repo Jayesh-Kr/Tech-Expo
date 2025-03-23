@@ -45,13 +45,13 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-blue-400" />
-            Performance Metrics
+              <p className="text-white text-[20px]">Performance Metrics</p>
           </CardTitle>
           <Badge variant="outline" className="bg-gray-700/50 text-gray-300">
             Last checked: 2 min ago
           </Badge>
         </div>
-        <CardDescription>Current performance analysis</CardDescription>
+        <CardDescription><p className="text-[#9CA3AF]">Current performance analysis</p></CardDescription>
       </CardHeader>
       
       <CardContent className="pt-4">

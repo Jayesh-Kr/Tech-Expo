@@ -24,18 +24,6 @@ interface RecentEventsProps {
 }
 
 const RecentEvents: React.FC<RecentEventsProps> = ({ events }) => {
-  const getEventIcon = (type: string) => {
-    switch(type) {
-      case 'up':
-        return <CheckCircle className="h-4 w-4 text-green-400" />;
-      case 'down':
-        return <XCircle className="h-4 w-4 text-red-400" />;
-      case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-yellow-400" />;
-      default:
-        return <Info className="h-4 w-4 text-blue-400" />;
-    }
-  };
   
   const formatTime = (dateString: string | undefined | null) => {
     // If the dateString is undefined or null, return "N/A"
@@ -78,16 +66,16 @@ const RecentEvents: React.FC<RecentEventsProps> = ({ events }) => {
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Clock className="h-5 w-5 text-blue-400" />
-          Recent Events
+           <p className='text-white text-[20px]'>Recent Events</p>
         </CardTitle>
-        <CardDescription>Latest incidents and status changes</CardDescription>
+        <CardDescription><p className='text-[#9CA3AF]'>Latest incidents and status changes</p></CardDescription>
       </CardHeader>
       
       <CardContent>
         {events.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
-            <div className="mx-auto h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-3">
-              <CheckCircle className="h-6 w-6 text-red-400" />
+            <div className="mx-auto h-12 w-12 rounded-full flex items-center justify-center mb-3">
+              <CheckCircle className="h-6 w-6 text-white" />
             </div>
             <p className="text-sm font-medium text-gray-400">No events to display</p>
             <p className="text-xs text-gray-500 mt-1">Your monitor is running smoothly</p>
@@ -101,22 +89,12 @@ const RecentEvents: React.FC<RecentEventsProps> = ({ events }) => {
                   index !== events.length - 1 ? 'border-l border-gray-700 ml-3' : ''
                 }`}
               >
-                <div className={`absolute left-[-6px] top-2 h-5 w-5 rounded-full flex items-center justify-center z-10 ${
-                  event.type === 'up' ? 'bg-green-500/20' : 
-                  event.type === 'down' ? 'bg-red-500/20' : 
-                  event.type === 'warning' ? 'bg-yellow-500/20' : 
-                  'bg-red-500/55'
-                }`}>
-                  {getEventIcon(event.type)}
+                <div className={`absolute left-[-6px] top-2 h-5 w-5 rounded-full flex items-center justify-center z-10 `}>
+                  <XCircle className="h-4 w-4 text-red-400" />
                 </div>
                 
                 <div className="mb-1 flex items-center justify-between">
-                  <h4 className={`text-sm font-medium ${
-                    event.type === 'up' ? 'text-red-400' : 
-                    event.type === 'down' ? 'text-red-400' : 
-                    event.type === 'warning' ? 'text-red-400' : 
-                    'text-red-400'
-                  }`}>
+                  <h4 className={`text-sm font-medium text-red-400`}>
                     {event.type === 'up' ? 'Service Restored' :
                      event.type === 'warning' ? 'Service Outage' : "Server Down"
                      }
@@ -144,13 +122,6 @@ const RecentEvents: React.FC<RecentEventsProps> = ({ events }) => {
             ))}
           </div>
         )}
-        
-        <div className="pt-2 mt-2 border-t border-gray-700">
-          <Button variant="ghost" size="sm" className="w-full justify-center text-gray-400 hover:text-gray-200 gap-1 text-sm">
-            View All Events
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
