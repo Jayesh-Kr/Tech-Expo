@@ -121,7 +121,7 @@ const StatusHistory: React.FC<StatusHistoryProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <Card className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-all group">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -134,22 +134,6 @@ const StatusHistory: React.FC<StatusHistoryProps> = ({
             </div>
             <div className="text-2xl font-bold text-green-400 group-hover:scale-110 transition-transform origin-right">
               {uptimePercentage.toFixed(2)}%
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-all">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                <AlertTriangle className="h-4 w-4 text-yellow-500" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-400">Degraded</div>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-yellow-400">
-              {((warningCount / statusHistory.length) * 100).toFixed(0)}%
             </div>
           </CardContent>
         </Card>
