@@ -6,13 +6,13 @@ A **decentralized website monitoring system** leveraging **dPIN (Decentralized P
 > 
 
 <div align="center">
-  <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lviffy/Tech-Expo">
-  <img alt="GitHub license" src="https://img.shields.io/github/license/Lviffy/Tech-Expo">
-  <a href="https://github.com/Lviffy/Tech-Expo/contributors">
-    <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/Lviffy/Tech-Expo">
+  <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lviffy/dPIN">
+  <img alt="GitHub license" src="https://img.shields.io/github/license/Lviffy/dPIN">
+  <a href="https://github.com/Lviffy/dPIN/contributors">
+    <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/Lviffy/dPIN">
   </a>
-  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/Lviffy/Tech-Expo">
-  <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/Lviffy/Tech-Expo">
+  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/Lviffy/dPIN">
+  <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/Lviffy/dPIN">
 </div>
 
 ---
