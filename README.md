@@ -69,8 +69,8 @@ Our **dPIN-based monitoring system** decentralizes website uptime tracking by le
 ## ⚙️ Installation & Setup  
 ```bash
 # Clone the repository
-git clone https://github.com/Lviffy/Tech-Expo.git
-cd Tech-Expo
+git clone https://github.com/Lviffy/dPIN.git
+cd dPIN
 
 # Install backend dependencies
 cd backend
@@ -144,7 +144,7 @@ After obtaining all keys, add them to your `.env` files in both backend and fron
 
 ## 🧠 Project Structure
 ```
-Tech-Expo/
+dPIN/
 ├── backend/               # Express.js server
 │   ├── db/                # Database connection
 │   ├── model/             # MongoDB schemas
