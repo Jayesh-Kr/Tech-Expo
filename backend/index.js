@@ -303,7 +303,7 @@ app.get("/website-details:id", authenticateUser, async (req, res) => {
     );
     const disabled = website.disabled;
     const dateCreated = website.createdAt;
-    const downlog = await DownLog.find({ websiteId });
+    const downlog = await DownLog.find({ websiteId }).sort({ createdAt: -1 }).limit(5);
     const websiteDetails = async () => {
       const ticks = await WebsiteTick.find({ websiteId });
 
