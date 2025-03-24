@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Plus, Search, Filter, BarChart, AlertCircle, Bell, Settings, ArrowRight, Clock, User, Cpu, X, Trash2, Power } from "lucide-react";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth,useUser } from "@clerk/clerk-react";
 // Button component (unchanged)
 const Button = ({ children, onClick, className = "", variant = "default" }) => (
   <button
@@ -178,6 +178,7 @@ const StatCard = ({ title, value, icon, color }) => (
 
 // AddMonitor component (unchanged)
 const AddMonitor = ({ isOpen, onClose, onAdd }) => {
+  const user = useUser();
   const {getToken} = useAuth();
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
@@ -195,13 +196,14 @@ const AddMonitor = ({ isOpen, onClose, onAdd }) => {
     setError("");
     const token = await getToken();
     try {
+      const userId = user.user.id;
+      console.log(`User id in creating website : ${userId}`)
       const response = await fetch("http://localhost:3000/website", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization" : `Bearer ${token}`
         },
-        body: JSON.stringify({ websiteName: name, url }),
+        body: JSON.stringify({ websiteName: name, url, userId }),
       });
 
       if (!response.ok) {
@@ -289,16 +291,18 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [monitorsActive, setMonitorsActive] = useState(true);
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, monitorId: null, monitorName: "" });
+  const user = useUser();
 
   // Fetch data from the backend
   const fetchDashboardDetails = async () => {
+    const userId = user.user.id;
     const token = await getToken();
     try {
       const response = await fetch("http://localhost:3000/dashboard-details", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization" : `Bearer ${token}`
+          "userId" : `${user.user.id}`
         },
       });
 
@@ -334,7 +338,7 @@ const Dashboard = () => {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization" : `Bearer ${token}`
+          "userId" : `${user.user.id}`
         },
       });
 

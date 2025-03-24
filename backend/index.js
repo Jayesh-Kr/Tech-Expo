@@ -224,16 +224,14 @@ app.post("/website-tick", async (req, res) => {
   }
 });
 
-app.use(clerkMiddleware());
-
 // Website Creation
 // authenticatUser middleware -> add
-app.post("/website", requireAuth(), async (req, res) => {
+app.post("/website", async (req, res) => {
   try {
-    console.log("Reacher cretion of the server");
+    console.log("Reached creation of the server");
     const website = await Website.create({
       url: req.body.url,
-      userId: req.auth.userId,
+      userId: req.body.userId,
       websiteName: req.body.websiteName,
     });
     res.status(201).json(website);
@@ -242,28 +240,8 @@ app.post("/website", requireAuth(), async (req, res) => {
   }
 });
 
-// Fetch Website Details
-app.get("/website/:id", requireAuth(), async (req, res) => {
-  try {
-    const userId = req.auth.userId; // Get the user ID from Clerk
-
-    const website = await Website.findOne({
-      _id: req.params.id,
-      userId: userId, // Use the user ID from Clerk
-    });
-
-    if (!website) {
-      return res.status(404).json({ message: "Website not found" });
-    }
-
-    res.json(website);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
 // Update Website Tracking
-app.put("/website-track/:id", requireAuth(), async (req, res) => {
+app.put("/website-track/:id", async (req, res) => {
   console.log("Reached the update section");
   try {
     const disabled = await Website.findById({ _id: req.params.id }).select(
@@ -289,7 +267,7 @@ app.put("/website-track/:id", requireAuth(), async (req, res) => {
 });
 
 // Get Website details to Frontend
-app.get("/website-details:id", requireAuth(), async (req, res) => {
+app.get("/website-details:id", async (req, res) => {
   try {
     let websiteId = req.params.id;
     // Hardcoding website Id
@@ -389,9 +367,9 @@ app.get("/website-details:id", requireAuth(), async (req, res) => {
 });
 
 // Delete Website
-app.delete("/website/:id", requireAuth(), async (req, res) => {
+app.delete("/website/:id",  async (req, res) => {
   try {
-    const userId = req.auth.userId; // Get the user ID from Clerk
+    const userId = req.header('userId'); // Get the user ID from Clerk
     const website = await Website.findOneAndDelete({
       _id: req.params.id,
       userId: userId,
@@ -410,9 +388,9 @@ app.delete("/website/:id", requireAuth(), async (req, res) => {
   }
 });
 
-app.get("/dashboard-details", requireAuth(), async (req, res) => {
+app.get("/dashboard-details",  async (req, res) => {
   try {
-    const userId = req.auth.userId; // Assuming authentication middleware sets `req.user`
+    const userId = req.header('userId'); // Assuming authentication middleware sets `req.user`
     // Fetch all websites monitored by the user
     const websites = await Website.find({ userId });
 
