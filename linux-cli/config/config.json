@@ -1,0 +1,13 @@
+{
+  "hubServer": "ws://localhost:8081",
+  "pingInterval": 10000,
+  "targetURL": "https://www.google.com",
+  "latencySettings": {
+    "timeout": 3000,
+    "maxRedirects": 0,
+    "disableCache": true,
+    "useHeadRequest": true,
+    "preferNetworkPing": true,
+    "forceLowLatency": true
+  }
+}
