@@ -15,6 +15,30 @@ A **decentralized website monitoring system** leveraging **dPIN (Decentralized P
   <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/Lviffy/dPIN">
 </div>
 
+## 📸 Preview Images
+
+<div align="center">
+  <table>
+    <tr>
+      <td><img src="preview-images/landing-page.png" alt="Landing Page" width="200"></td>
+      <td><img src="preview-images/Features.png" alt="Features" width="200"></td>
+      <td><img src="preview-images/Pricing.png" alt="Pricing" width="200"></td>
+      <td><img src="preview-images/Validator-Dashboard.png" alt="Validator Dashboard" width="200"></td>
+      <td><img src="preview-images/Monitor.png" alt="Monitor" width="200"></td>
+    </tr>
+    <tr>
+      <td><img src="preview-images/Monitor-Graph.png" alt="Monitor Graph" width="200"></td>
+      <td><img src="preview-images/User-Dashboard.png" alt="User Dashboard" width="200"></td>
+      <td><img src="preview-images/Validatoions.png" alt="Validations" width="200"></td>
+      <td><img src="preview-images/validator-cli.png" alt="Validator CLI" width="200"></td>
+      <td><img src="preview-images/valiadtor-cli2.png" alt="Validator CLI 2" width="200"></td>
+    </tr>
+    <tr>
+      <td colspan="5" align="center"><em>Preview of the dPIN Website Monitoring System Interface</em></td>
+    </tr>
+  </table>
+</div>
+
 ---
 
 ## 🔥 Key Features  
@@ -239,6 +263,3 @@ We welcome contributions! Follow these steps:
 ---
 
 ## 📜 If you found this useful, don't forget to ⭐ star this repo!
-
-
-
